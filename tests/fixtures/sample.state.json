@@ -1,0 +1,20 @@
+{
+  "stations": [
+    {
+      "position": [613, 119],
+      "shape": "square"
+    },
+    {
+      "position": [1284, 539],
+      "shape": "triangle"
+    },
+    {
+      "position": [948, 540],
+      "shape": "circle"
+    },
+    {
+      "position": [1451, 203],
+      "shape": "circle"
+    }
+  ]
+}
