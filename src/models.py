@@ -1,17 +1,17 @@
 from pydantic import BaseModel, field_validator
 
-from src.types import Position, StationShape
+from src import types
 
 
 class Station(BaseModel):
-    position: Position
-    shape: StationShape
+    position: types.Position
+    shape: types.StationShape
 
     @field_validator("shape", mode="before")
     @classmethod
-    def parse_shape(cls, v: str | StationShape) -> StationShape:
+    def parse_shape(cls, v: str | types.StationShape) -> types.StationShape:
         if isinstance(v, str):
-            return StationShape.from_label(v)
+            return types.StationShape.from_label(v)
         return v
 
 

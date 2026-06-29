@@ -19,8 +19,8 @@ class StationShape(Enum):
         return next(m for m in cls if m.value.name == label)
 
 
-Color: TypeAlias = np.ndarray        # 1D array (B, G, R) - BGR color value
+Color: TypeAlias = tuple[int, int, int] # (B, G, R) - BGR color value
 Frame: TypeAlias = np.ndarray        # 3D array (height, width, 3 channels BGR)
 Mask: TypeAlias = np.ndarray         # 2D array (height, width) - binary mask
-Contour: TypeAlias = np.ndarray      # 2D array (N, 1, 2) - contour point coordinates
-Position: TypeAlias = tuple[int, int]       # (x, y) coordinates
+Contour: TypeAlias = np.ndarray      # (N, 1, 2) - contour points
+Position: TypeAlias = tuple[int, int] # (x, y) coordinates
