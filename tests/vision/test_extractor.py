@@ -3,7 +3,8 @@ from pathlib import Path
 import pytest
 
 from src.vision import extractor
-from src import models, types
+import src.domain.models as models
+import src.domain.types as types
 from src.utils import gateways
 
 

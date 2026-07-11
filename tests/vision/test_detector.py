@@ -5,7 +5,9 @@ from functools import partial
 from typing import Callable
 
 from src.vision import detector
-from src import types, models, config
+import src.domain.types as types
+import src.domain.models as models
+import src.vision.config as config
 
 
 TEST_FRAME_SIZE = 100

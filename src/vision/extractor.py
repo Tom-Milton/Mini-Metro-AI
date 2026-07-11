@@ -1,4 +1,5 @@
-from src import types, models
+import src.domain.types as types
+import src.domain.models as models
 from src.vision import detector
 
 
