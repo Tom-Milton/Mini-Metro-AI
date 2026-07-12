@@ -1,7 +1,7 @@
 import numpy as np
 from PIL import ImageGrab
 
-import src.domain.types as types
+from src.domain import types
 
 
 class ScreenCapture:

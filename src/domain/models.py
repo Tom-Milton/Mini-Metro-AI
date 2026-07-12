@@ -1,6 +1,6 @@
 from pydantic import BaseModel, field_validator
 
-import src.domain.types as types
+from src.domain import types
 
 
 class Station(BaseModel):

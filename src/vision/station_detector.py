@@ -4,9 +4,9 @@ import logging
 import cv2
 import numpy as np
 
-import src.vision.config as config
-import src.domain.types as types
-import src.domain.models as models
+from src.domain import models
+from src.domain import types
+from src.vision import config
 
 
 logger = logging.getLogger(__name__)

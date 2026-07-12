@@ -1,10 +1,10 @@
 import logging
 
-import src.app.run_app as run_app
-import src.infrastructure.escape_listener as escape_listener
-import src.infrastructure.screen_capture as screen_capture
-import src.infrastructure.shutdown_manager as shutdown_manager
-import src.vision.game_state_extractor as game_state_extractor
+from src.app import run_app
+from src.infrastructure import escape_listener
+from src.infrastructure import screen_capture
+from src.infrastructure import shutdown_manager
+from src.vision import game_state_extractor
 
 
 def main() -> None:

@@ -1,4 +1,4 @@
-import src.domain.types as types
+from src.domain import types
 
 STATION_COLOR: types.Color = (248, 248, 248)  # Station detection color (BGR)
 STATION_TOLERANCE: int = 3  # Color tolerance for masking (+/- from exact color)
