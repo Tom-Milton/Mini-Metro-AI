@@ -2,7 +2,7 @@ import cv2
 from pathlib import Path
 import pytest
 
-from src.vision import extractor
+import src.vision.game_state_extractor as game_state_extractor
 import src.domain.models as models
 import src.domain.types as types
 from src.utils import gateways
@@ -11,7 +11,11 @@ from src.utils import gateways
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 
 
-class TestExtractor:
+class TestGameStateExtractor:
+    @pytest.fixture
+    def extractor(self) -> game_state_extractor.GameStateExtractor:
+        return game_state_extractor.GameStateExtractor()
+
     @pytest.fixture(params=list(FIXTURES_DIR.glob("*.png")), ids=lambda p: p.stem)
     def screenshot_path(self, request: pytest.FixtureRequest) -> Path:
         return request.param
@@ -27,9 +31,12 @@ class TestExtractor:
         state_path = screenshot_path.with_suffix("").with_suffix(".state.json")
         return models.GameState.model_validate(gateways.JsonGateway().load(state_path))
 
-    def test_extract_game_state(
-        self, input_frame: types.Frame, expected_state: models.GameState
+    def test_extract(
+        self,
+        extractor: game_state_extractor.GameStateExtractor,
+        input_frame: types.Frame,
+        expected_state: models.GameState,
     ) -> None:
-        observed_state = extractor.extract_game_state(input_frame).sorted()
+        observed_state = extractor.extract(input_frame).sorted()
         expected_state = expected_state.sorted()
         assert observed_state == expected_state

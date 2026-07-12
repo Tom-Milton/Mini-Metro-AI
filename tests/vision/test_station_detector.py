@@ -4,7 +4,7 @@ import pytest
 from functools import partial
 from typing import Callable
 
-from src.vision import detector
+import src.vision.station_detector as station_detector
 import src.domain.types as types
 import src.domain.models as models
 import src.vision.config as config
@@ -33,8 +33,8 @@ TEST_CASES = [
 
 class TestStationDetector:
     @pytest.fixture
-    def detector_instance(self) -> detector.StationDetector:
-        return detector.StationDetector()
+    def detector(self) -> station_detector.StationDetector:
+        return station_detector.StationDetector()
 
     @pytest.fixture(params=TEST_CASES)
     def test_case(self, request: pytest.FixtureRequest) -> tuple[types.StationShape, Callable[[types.Frame], None]]:
@@ -58,12 +58,12 @@ class TestStationDetector:
     def expected_station(self, shape: types.StationShape) -> models.Station:
         return models.Station(position=TEST_POLYGON_CENTER, shape=shape)
 
-    def test_detect_shapes(
+    def test_detect(
         self,
-        detector_instance: detector.StationDetector,
+        detector: station_detector.StationDetector,
         input_frame: types.Frame,
         expected_station: models.Station,
     ) -> None:
-        stations = detector_instance.detect(input_frame)
+        stations = detector.detect(input_frame)
         observed_station = stations[0]
         assert observed_station.shape == expected_station.shape
