@@ -5,6 +5,7 @@ from pynput import keyboard
 
 KeyPress: TypeAlias = keyboard.Key | keyboard.KeyCode | None
 
+
 class EscapeListener:
     def __init__(
         self,

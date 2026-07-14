@@ -5,6 +5,7 @@ import pytest
 
 from src.infrastructure import escape_listener
 
+
 class TestEscapeListener:
     @pytest.fixture
     def on_escape(self) -> Mock:

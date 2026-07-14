@@ -17,17 +17,25 @@ TEST_POLYGON_RADIUS = 30
 
 def _draw_polygon(img: types.Frame, sides: int) -> None:
     angles = np.linspace(-np.pi / 2, 2 * np.pi - np.pi / 2, sides, endpoint=False)
-    points = np.column_stack((
-        TEST_POLYGON_CENTER[0] + TEST_POLYGON_RADIUS * np.cos(angles),
-        TEST_POLYGON_CENTER[1] + TEST_POLYGON_RADIUS * np.sin(angles),
-    )).astype(np.int32)
+    points = np.column_stack(
+        (
+            TEST_POLYGON_CENTER[0] + TEST_POLYGON_RADIUS * np.cos(angles),
+            TEST_POLYGON_CENTER[1] + TEST_POLYGON_RADIUS * np.sin(angles),
+        )
+    ).astype(np.int32)
     cv2.fillPoly(img, [points], config.STATION_COLOR)
 
 
 TEST_CASES = [
-    pytest.param((types.StationShape.CIRCLE, partial(_draw_polygon, sides=100)), id="circle"),
-    pytest.param((types.StationShape.TRIANGLE, partial(_draw_polygon, sides=3)), id="triangle"),
-    pytest.param((types.StationShape.SQUARE, partial(_draw_polygon, sides=4)), id="square"),
+    pytest.param(
+        (types.StationShape.CIRCLE, partial(_draw_polygon, sides=100)), id="circle"
+    ),
+    pytest.param(
+        (types.StationShape.TRIANGLE, partial(_draw_polygon, sides=3)), id="triangle"
+    ),
+    pytest.param(
+        (types.StationShape.SQUARE, partial(_draw_polygon, sides=4)), id="square"
+    ),
 ]
 
 
@@ -37,15 +45,21 @@ class TestStationDetector:
         return station_detector.StationDetector()
 
     @pytest.fixture(params=TEST_CASES)
-    def test_case(self, request: pytest.FixtureRequest) -> tuple[types.StationShape, Callable[[types.Frame], None]]:
+    def test_case(
+        self, request: pytest.FixtureRequest
+    ) -> tuple[types.StationShape, Callable[[types.Frame], None]]:
         return request.param
 
     @pytest.fixture
-    def shape(self, test_case: tuple[types.StationShape, Callable[[types.Frame], None]]) -> types.StationShape:
+    def shape(
+        self, test_case: tuple[types.StationShape, Callable[[types.Frame], None]]
+    ) -> types.StationShape:
         return test_case[0]
 
     @pytest.fixture
-    def drawer(self, test_case: tuple[types.StationShape, Callable[[types.Frame], None]]) -> Callable[[types.Frame], None]:
+    def drawer(
+        self, test_case: tuple[types.StationShape, Callable[[types.Frame], None]]
+    ) -> Callable[[types.Frame], None]:
         return test_case[1]
 
     @pytest.fixture

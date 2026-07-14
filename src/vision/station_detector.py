@@ -11,11 +11,17 @@ from src.vision import config
 
 logger = logging.getLogger(__name__)
 
-_VERTICES_TO_SHAPE: dict[int, types.StationShape] = {m.value.vertices: m for m in types.StationShape}
+_VERTICES_TO_SHAPE: dict[int, types.StationShape] = {
+    m.value.vertices: m for m in types.StationShape
+}
 
 
 class StationDetector:
-    def __init__(self, color: types.Color = config.STATION_COLOR, tolerance: int = config.STATION_TOLERANCE):
+    def __init__(
+        self,
+        color: types.Color = config.STATION_COLOR,
+        tolerance: int = config.STATION_TOLERANCE,
+    ):
         self.color = color
         self.tolerance = tolerance
 

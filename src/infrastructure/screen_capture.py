@@ -6,6 +6,7 @@ from src.domain import types
 
 ScreenGrab = Callable[[], Image.Image]
 
+
 class ScreenCapture:
     def __init__(self, screen_grab: ScreenGrab | None = None) -> None:
         self._screen_grab = screen_grab or ImageGrab.grab
