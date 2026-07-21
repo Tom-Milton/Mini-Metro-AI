@@ -1,5 +1,6 @@
 import logging
 
+from src.automation import station_joiner
 from src.infrastructure import escape_listener
 from src.infrastructure import screen_capture
 from src.infrastructure import shutdown_manager
@@ -13,11 +14,13 @@ class CaptureApp:
         self,
         screen: screen_capture.ScreenCapture,
         extractor: game_state_extractor.GameStateExtractor,
+        joiner: station_joiner.StationJoiner,
         keyboard: escape_listener.EscapeListener,
         shutdown: shutdown_manager.ShutdownManager,
     ) -> None:
         self._screen = screen
         self._extractor = extractor
+        self._joiner = joiner
         self._keyboard = keyboard
         self._shutdown = shutdown
 
@@ -39,4 +42,4 @@ class CaptureApp:
         while not self._shutdown.wait(interval):
             frame = self._screen.capture()
             state = self._extractor.extract(frame)
-            logger.info("Captured %d stations", len(state.stations))
+            self._joiner.join(state.stations)
