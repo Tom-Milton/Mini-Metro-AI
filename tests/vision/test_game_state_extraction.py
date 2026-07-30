@@ -2,9 +2,11 @@ import cv2
 from pathlib import Path
 import pytest
 
-import src.vision.game_state_extractor as game_state_extractor
-import src.domain.models as models
-import src.domain.types as types
+from src.vision import game_state_extraction
+from src.vision import station_detection
+from src.vision import line_detection
+from src.domain import models
+from src.domain import types
 from src.utils import gateways
 
 
@@ -13,8 +15,11 @@ FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 
 class TestGameStateExtractor:
     @pytest.fixture
-    def extractor(self) -> game_state_extractor.GameStateExtractor:
-        return game_state_extractor.GameStateExtractor()
+    def extractor(self) -> game_state_extraction.GameStateExtractor:
+        return game_state_extraction.GameStateExtractor(
+            station_detector=station_detection.build_station_detector(),
+            line_detector=line_detection.build_line_detector(),
+        )
 
     @pytest.fixture(params=list(FIXTURES_DIR.glob("*.png")), ids=lambda p: p.stem)
     def screenshot_path(self, request: pytest.FixtureRequest) -> Path:
@@ -33,10 +38,9 @@ class TestGameStateExtractor:
 
     def test_extract(
         self,
-        extractor: game_state_extractor.GameStateExtractor,
+        extractor: game_state_extraction.GameStateExtractor,
         input_frame: types.Frame,
         expected_state: models.GameState,
     ) -> None:
-        observed_state = extractor.extract(input_frame).sorted()
-        expected_state = expected_state.sorted()
+        observed_state = extractor.extract(input_frame)
         assert observed_state == expected_state

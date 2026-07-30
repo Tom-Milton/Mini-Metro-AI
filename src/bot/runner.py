@@ -4,7 +4,7 @@ from src.automation import station_joiner
 from src.infrastructure import escape_listener
 from src.infrastructure import screen_capture
 from src.infrastructure import shutdown_manager
-from src.vision import game_state_extractor
+from src.vision import game_state_extraction
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +13,7 @@ class CaptureApp:
     def __init__(
         self,
         screen: screen_capture.ScreenCapture,
-        extractor: game_state_extractor.GameStateExtractor,
+        extractor: game_state_extraction.GameStateExtractor,
         joiner: station_joiner.StationJoiner,
         keyboard: escape_listener.EscapeListener,
         shutdown: shutdown_manager.ShutdownManager,

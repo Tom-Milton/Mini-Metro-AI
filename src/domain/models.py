@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, computed_field
 
 from src.domain import types
 
@@ -14,9 +14,16 @@ class Station(BaseModel):
             return types.StationShape.from_label(v)
         return v
 
+    @computed_field
+    @property
+    def id(self) -> str:
+        return f"{self.shape.value.name}-{self.position[0]}-{self.position[1]}"
+
+
+class Line(BaseModel):
+    station_ids: list[str]
+
 
 class GameState(BaseModel):
     stations: list[Station]
-
-    def sorted(self) -> "GameState":
-        return GameState(stations=sorted(self.stations, key=lambda s: s.position))
+    lines: list[Line]

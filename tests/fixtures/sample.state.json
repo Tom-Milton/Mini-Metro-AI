@@ -1,10 +1,6 @@
 {
   "stations": [
     {
-      "position": [613, 119],
-      "shape": "square"
-    },
-    {
       "position": [1284, 539],
       "shape": "triangle"
     },
@@ -15,6 +11,15 @@
     {
       "position": [1451, 203],
       "shape": "circle"
+    },
+    {
+      "position": [613, 119],
+      "shape": "square"
     }
+  ],
+  "lines": [
+    "square-613-119",
+    "circle-948-540",
+    "triangle-1284-539"
   ]
 }

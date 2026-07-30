@@ -1,12 +1,12 @@
-from typing import List, Sequence
+from typing import List
 import logging
 
 import cv2
-import numpy as np
 
 from src.domain import models
 from src.domain import types
 from src.vision import config
+from src.vision import contour_extraction
 
 
 logger = logging.getLogger(__name__)
@@ -19,14 +19,12 @@ _VERTICES_TO_SHAPE: dict[int, types.StationShape] = {
 class StationDetector:
     def __init__(
         self,
-        color: types.Color = config.STATION_COLOR,
-        tolerance: int = config.STATION_TOLERANCE,
+        contour_extractor: contour_extraction.ColourMaskContourExtractor,
     ):
-        self.color = color
-        self.tolerance = tolerance
+        self.contour_extractor = contour_extractor
 
     def detect(self, frame: types.Frame) -> List[models.Station]:
-        contours = self._extract_contours(frame)
+        contours = self.contour_extractor.extract(frame)
         logger.debug("Found %d contours", len(contours))
 
         stations: list[models.Station] = []
@@ -39,18 +37,28 @@ class StationDetector:
         logger.info("Detected %d stations", len(stations))
         return stations
 
-    def _extract_contours(self, frame: types.Frame) -> Sequence[types.Contour]:
-        color_array = np.array(self.color, dtype=np.uint8)
-        lower = np.clip(color_array - self.tolerance, 0, 255)
-        upper = np.clip(color_array + self.tolerance, 0, 255)
-        mask = cv2.inRange(frame, lower, upper).astype(np.uint8)
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        return contours
-
     def _compute_centroid(self, contour: types.Contour) -> types.Position:
-        return tuple(contour.mean(axis=0).astype(int)[0])
+        """m00 is area; m10 and m01 are x/y first moments used for centroid."""
+        moments = cv2.moments(contour)
+        if moments["m00"] == 0:
+            centroid = (0, 0)
+        else:
+            centroid = (
+                int(moments["m10"] / moments["m00"]),
+                int(moments["m01"] / moments["m00"]),
+            )
+        return types.Position(centroid)
 
     def _classify_shape(self, contour: types.Contour) -> types.StationShape:
         epsilon = config.POLYGON_EPSILON_RATIO * cv2.arcLength(contour, True)
         polygon = cv2.approxPolyDP(contour, epsilon, True)
         return _VERTICES_TO_SHAPE.get(len(polygon), types.StationShape.CIRCLE)
+
+
+def build_station_detector() -> StationDetector:
+    return StationDetector(
+        contour_extractor=contour_extraction.ColourMaskContourExtractor(
+            color=config.STATION_COLOR,
+            mask_tolerance=config.MASK_TOLERANCE,
+        )
+    )
