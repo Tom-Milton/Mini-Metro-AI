@@ -16,12 +16,12 @@ class Station(BaseModel):
 
     @computed_field
     @property
-    def id(self) -> str:
+    def id(self) -> types.StationId:
         return f"{self.shape.value.name}-{self.position[0]}-{self.position[1]}"
 
 
 class Line(BaseModel):
-    station_ids: list[str]
+    station_ids: list[types.StationId]
 
 
 class GameState(BaseModel):

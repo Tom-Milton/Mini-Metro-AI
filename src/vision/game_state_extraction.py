@@ -1,5 +1,6 @@
 from src.domain import models
 from src.domain import types
+from src.vision import config
 from src.vision import station_detection
 from src.vision import line_detection
 
@@ -17,7 +18,15 @@ class GameStateExtractor:
         self,
         frame: types.Frame,
     ) -> models.GameState:
+        game_space = self._game_space(frame)
+        stations = self._station_detector.detect(game_space)
+        lines = self._line_detector.detect(game_space, stations)
         return models.GameState(
-            stations=self._station_detector.detect(frame),
-            lines=self._line_detector.detect(frame),
+            stations=stations,
+            lines=lines,
         )
+
+    def _game_space(self, frame: types.Frame) -> types.Frame:
+        """Crop out the bottom UI toolbar before detecting game elements."""
+        height = int(frame.shape[0] * config.GAME_SPACE_HEIGHT_RATIO)
+        return frame[:height]

@@ -19,23 +19,19 @@ _VERTICES_TO_SHAPE: dict[int, types.StationShape] = {
 class StationDetector:
     def __init__(
         self,
-        contour_extractor: contour_extraction.ColourMaskContourExtractor,
+        contour_extractor: contour_extraction.ContourExtractor,
     ):
         self.contour_extractor = contour_extractor
 
     def detect(self, frame: types.Frame) -> List[models.Station]:
         contours = self.contour_extractor.extract(frame)
-        logger.debug("Found %d contours", len(contours))
-
-        stations: list[models.Station] = []
-        for contour in contours:
-            position = self._compute_centroid(contour)
-            shape = self._classify_shape(contour)
-            logger.debug("Detected %s at %s", shape, position)
-            stations.append(models.Station(position=position, shape=shape))
-
-        logger.info("Detected %d stations", len(stations))
+        stations = [self._create_station(contour) for contour in contours]
         return stations
+
+    def _create_station(self, contour: types.Contour) -> models.Station:
+        position = self._compute_centroid(contour)
+        shape = self._classify_shape(contour)
+        return models.Station(position=position, shape=shape)
 
     def _compute_centroid(self, contour: types.Contour) -> types.Position:
         """m00 is area; m10 and m01 are x/y first moments used for centroid."""
@@ -56,9 +52,13 @@ class StationDetector:
 
 
 def build_station_detector() -> StationDetector:
+    mask_extractor = contour_extraction.ColourMaskExtractor(
+        color=config.STATION_COLOR,
+        mask_tolerance=config.MASK_TOLERANCE,
+    )
+    contour_extractor = contour_extraction.ContourExtractor(
+        mask_extractor=mask_extractor,
+    )
     return StationDetector(
-        contour_extractor=contour_extraction.ColourMaskContourExtractor(
-            color=config.STATION_COLOR,
-            mask_tolerance=config.MASK_TOLERANCE,
-        )
+        contour_extractor=contour_extractor,
     )

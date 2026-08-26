@@ -18,12 +18,15 @@ TEST_CASES = [
 ]
 
 
-class TestColourMaskContourExtractor:
+class TestContourExtractor:
     @pytest.fixture
-    def extractor(self) -> contour_extraction.ColourMaskContourExtractor:
-        return contour_extraction.ColourMaskContourExtractor(
+    def extractor(self) -> contour_extraction.ContourExtractor:
+        mask_extractor = contour_extraction.ColourMaskExtractor(
             color=config.STATION_COLOR,
             mask_tolerance=config.MASK_TOLERANCE,
+        )
+        return contour_extraction.ContourExtractor(
+            mask_extractor=mask_extractor,
         )
 
     @pytest.fixture(params=TEST_CASES)
@@ -40,7 +43,7 @@ class TestColourMaskContourExtractor:
 
     def test_extract(
         self,
-        extractor: contour_extraction.ColourMaskContourExtractor,
+        extractor: contour_extraction.ContourExtractor,
         input_frame: types.Frame,
     ) -> None:
         observed_contours = extractor.extract(input_frame)
