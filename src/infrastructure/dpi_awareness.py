@@ -1,5 +1,7 @@
 import ctypes
+import sys
 
 
 def enable_dpi_awareness() -> None:
-    ctypes.windll.shcore.SetProcessDpiAwareness(2)
+    if sys.platform == "win32":
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)

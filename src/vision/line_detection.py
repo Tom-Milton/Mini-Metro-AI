@@ -88,6 +88,7 @@ def build_line_detector() -> LineDetector:
     )
     contour_extractor = contour_extraction.ContourExtractor(
         mask_extractor=skeleton_mask_extractor,
+        min_area=0,  # Skeletonized lines are 1px wide and have near-zero area
     )
     return LineDetector(
         contour_extractor=contour_extractor,

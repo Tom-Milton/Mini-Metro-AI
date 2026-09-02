@@ -1,3 +1,9 @@
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+
+[tool.pyright]
+pythonPlatform = "All"
+
+[dependency-groups]
+dev = ["pre-commit>=4.3.0"]

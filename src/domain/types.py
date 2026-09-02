@@ -24,5 +24,6 @@ Frame: TypeAlias = np.ndarray  # 3D array (height, width, 3 channels BGR)
 Mask: TypeAlias = np.ndarray  # 2D array (height, width) - binary mask
 Contour: TypeAlias = np.ndarray  # (N, 1, 2) - contour points
 Position: TypeAlias = tuple[int, int]  # (x, y) coordinates
+DisplaySize: TypeAlias = tuple[int, int]  # (width, height) in pixels
 
 StationId: TypeAlias = str

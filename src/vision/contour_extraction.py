@@ -6,6 +6,7 @@ import numpy as np
 import skimage.morphology
 
 from src.domain import types
+from src.vision import config
 
 
 # scikit-image does not expose a complete type signature for this function.
@@ -54,10 +55,17 @@ class SkeletonMaskExtractor(MaskExtractor):
 
 
 class ContourExtractor:
-    def __init__(self, mask_extractor: MaskExtractor):
+    def __init__(
+        self,
+        mask_extractor: MaskExtractor,
+        min_area: float = config.MIN_CONTOUR_AREA,
+    ):
         self.mask_extractor = mask_extractor
+        self.min_area = min_area
 
     def extract(self, frame: types.Frame) -> Sequence[types.Contour]:
         mask = self.mask_extractor.extract(frame)
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        return contours
+        return [
+            contour for contour in contours if cv2.contourArea(contour) >= self.min_area
+        ]
