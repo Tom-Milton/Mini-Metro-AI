@@ -24,6 +24,7 @@ class LineDetector:
     ) -> List[models.Line]:
         contours = self.contour_extractor.extract(frame)
         lines = [self._create_line(contour, stations) for contour in contours]
+        logger.info("Detected %d lines", len(lines))
         return lines
 
     def _create_line(
@@ -33,6 +34,7 @@ class LineDetector:
     ) -> models.Line:
         matched_stations = self._find_stations(contour, stations)
         station_ids = self._order_stations(contour, matched_stations)
+        logger.info("Detected line with %d stations", len(station_ids))
         return models.Line(station_ids=station_ids)
 
     def _find_stations(

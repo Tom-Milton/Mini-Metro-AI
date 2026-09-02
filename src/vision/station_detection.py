@@ -26,6 +26,7 @@ class StationDetector:
     def detect(self, frame: types.Frame) -> List[models.Station]:
         contours = self.contour_extractor.extract(frame)
         stations = [self._create_station(contour) for contour in contours]
+        logger.info("Detected %d stations", len(stations))
         return stations
 
     def _create_station(self, contour: types.Contour) -> models.Station:

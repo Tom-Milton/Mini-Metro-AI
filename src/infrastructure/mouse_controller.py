@@ -40,4 +40,5 @@ class MouseController:
         self.press()
         for position in positions[1:]:
             self.drag(position, duration=0.5)
+        time.sleep(0.5)
         self.release()
