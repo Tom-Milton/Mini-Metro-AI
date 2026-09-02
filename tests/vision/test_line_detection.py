@@ -17,7 +17,7 @@ class TestLineDetector:
         return polygons.draw_rectangle(
             width=100,
             height=1,
-            color=config.LINE_COLOR,
+            colour=config.LINE_COLOUR,
         )
 
     @pytest.fixture

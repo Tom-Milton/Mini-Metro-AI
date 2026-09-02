@@ -52,7 +52,7 @@ class TestStationDetector:
 
     @pytest.fixture
     def input_frame(self, sides: int) -> types.Frame:
-        return polygons.draw_polygon(sides=sides, color=config.STATION_COLOR)
+        return polygons.draw_polygon(sides=sides, colour=config.STATION_COLOUR)
 
     @pytest.fixture
     def expected_station(

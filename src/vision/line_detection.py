@@ -78,7 +78,7 @@ class LineDetector:
 
 def build_line_detector() -> LineDetector:
     colour_mask_extractor = contour_extraction.ColourMaskExtractor(
-        color=config.LINE_COLOR,
+        colour=config.LINE_COLOUR,
         mask_tolerance=config.MASK_TOLERANCE,
     )
     dilating_mask_extractor = contour_extraction.DilatingMaskExtractor(

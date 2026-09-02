@@ -17,7 +17,7 @@ class TestMaskExtractor:
         return polygons.draw_rectangle(
             width=5,
             height=1,
-            color=config.LINE_COLOR,
+            colour=config.LINE_COLOUR,
             frame_size=9,
         )
 
@@ -37,7 +37,7 @@ class TestColourMaskExtractor(TestMaskExtractor):
     @pytest.fixture
     def extractor(self) -> contour_extraction.ColourMaskExtractor:
         return contour_extraction.ColourMaskExtractor(
-            color=config.LINE_COLOR,
+            colour=config.LINE_COLOUR,
             mask_tolerance=0,
         )
 
@@ -46,7 +46,7 @@ class TestColourMaskExtractor(TestMaskExtractor):
         return polygons.draw_rectangle(
             width=5,
             height=1,
-            color=(255, 255, 255),
+            colour=(255, 255, 255),
             frame_size=9,
         )[:, :, 0]
 
@@ -58,7 +58,7 @@ class TestDilatingMaskExtractor(TestMaskExtractor):
     def extractor(self) -> contour_extraction.DilatingMaskExtractor:
         return contour_extraction.DilatingMaskExtractor(
             mask_extractor=contour_extraction.ColourMaskExtractor(
-                color=config.LINE_COLOR,
+                colour=config.LINE_COLOUR,
                 mask_tolerance=0,
             ),
             dilation_size=3,
@@ -69,7 +69,7 @@ class TestDilatingMaskExtractor(TestMaskExtractor):
         return polygons.draw_rectangle(
             width=7,
             height=3,
-            color=(255, 255, 255),
+            colour=(255, 255, 255),
             frame_size=9,
         )[:, :, 0]
 
@@ -81,7 +81,7 @@ class TestSkeletonMaskExtractor(TestMaskExtractor):
     def extractor(self) -> contour_extraction.SkeletonMaskExtractor:
         return contour_extraction.SkeletonMaskExtractor(
             mask_extractor=contour_extraction.ColourMaskExtractor(
-                color=config.LINE_COLOR,
+                colour=config.LINE_COLOUR,
                 mask_tolerance=0,
             ),
         )
@@ -91,7 +91,7 @@ class TestSkeletonMaskExtractor(TestMaskExtractor):
         return polygons.draw_rectangle(
             width=5,
             height=1,
-            color=(255, 255, 255),
+            colour=(255, 255, 255),
             frame_size=9,
         )[:, :, 0]
 
@@ -111,7 +111,7 @@ class TestContourExtractor:
     @pytest.fixture
     def extractor(self) -> contour_extraction.ContourExtractor:
         mask_extractor = contour_extraction.ColourMaskExtractor(
-            color=config.STATION_COLOR,
+            colour=config.STATION_COLOUR,
             mask_tolerance=config.MASK_TOLERANCE,
         )
         return contour_extraction.ContourExtractor(
@@ -128,7 +128,7 @@ class TestContourExtractor:
 
     @pytest.fixture
     def input_frame(self, sides: int) -> types.Frame:
-        return polygons.draw_polygon(sides=sides, color=config.STATION_COLOR)
+        return polygons.draw_polygon(sides=sides, colour=config.STATION_COLOUR)
 
     def test_extract(
         self,

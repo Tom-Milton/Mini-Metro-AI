@@ -54,7 +54,7 @@ class StationDetector:
 
 def build_station_detector() -> StationDetector:
     mask_extractor = contour_extraction.ColourMaskExtractor(
-        color=config.STATION_COLOR,
+        colour=config.STATION_COLOUR,
         mask_tolerance=config.MASK_TOLERANCE,
     )
     contour_extractor = contour_extraction.ContourExtractor(

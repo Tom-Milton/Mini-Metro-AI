@@ -23,14 +23,14 @@ class MaskExtractor(ABC):
 
 
 class ColourMaskExtractor(MaskExtractor):
-    def __init__(self, color: types.Color, mask_tolerance: int):
-        self.color = color
+    def __init__(self, colour: types.Colour, mask_tolerance: int):
+        self.colour = colour
         self.mask_tolerance = mask_tolerance
 
     def extract(self, frame: types.Frame) -> types.Mask:
-        color_array = np.array(self.color, dtype=np.int16)
-        lower = np.clip(color_array - self.mask_tolerance, 0, 255).astype(np.uint8)
-        upper = np.clip(color_array + self.mask_tolerance, 0, 255).astype(np.uint8)
+        colour_array = np.array(self.colour, dtype=np.int16)
+        lower = np.clip(colour_array - self.mask_tolerance, 0, 255).astype(np.uint8)
+        upper = np.clip(colour_array + self.mask_tolerance, 0, 255).astype(np.uint8)
         return cv2.inRange(frame, lower, upper).astype(np.uint8)
 
 
