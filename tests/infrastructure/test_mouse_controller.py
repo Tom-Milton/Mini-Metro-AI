@@ -1,5 +1,4 @@
-import pynput.mouse as mouse
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 import pytest
 
@@ -12,6 +11,13 @@ class TestMouseController:
     def mock_mouse(self) -> Mock:
         mock = Mock()
         mock.position = (0, 0)
+
+        def _track_position(x: int, y: int, *args: object, **kwargs: object) -> None:
+            mock.position = (x, y)
+
+        mock.moveTo.side_effect = _track_position
+        mock.dragTo.side_effect = _track_position
+
         return mock
 
     @pytest.fixture
@@ -26,40 +32,6 @@ class TestMouseController:
     def controller(self, mock_mouse: Mock) -> mouse_controller.MouseController:
         return mouse_controller.MouseController(mock_mouse)
 
-    def test_press(
-        self,
-        controller: mouse_controller.MouseController,
-        mock_mouse: Mock,
-    ) -> None:
-        controller.press()
-        mock_mouse.press.assert_called_once_with(mouse.Button.left)
-
-    def test_release(
-        self,
-        controller: mouse_controller.MouseController,
-        mock_mouse: Mock,
-    ) -> None:
-        controller.release()
-        mock_mouse.release.assert_called_once_with(mouse.Button.left)
-
-    def test_move(
-        self,
-        controller: mouse_controller.MouseController,
-        mock_mouse: Mock,
-        end_position: types.Position,
-    ) -> None:
-        controller.move(end_position)
-        assert mock_mouse.position == end_position
-
-    def test_drag(
-        self,
-        controller: mouse_controller.MouseController,
-        mock_mouse: Mock,
-        end_position: types.Position,
-    ) -> None:
-        controller.drag(end_position)
-        assert mock_mouse.position == end_position
-
     def test_join(
         self,
         controller: mouse_controller.MouseController,
@@ -68,6 +40,10 @@ class TestMouseController:
         end_position: types.Position,
     ) -> None:
         controller.join([start_position, end_position])
-        mock_mouse.press.assert_called_once_with(mouse.Button.left)
-        mock_mouse.release.assert_called_once_with(mouse.Button.left)
+        assert mock_mouse.mock_calls == [
+            call.moveTo(*start_position),
+            call.mouseDown(button="left"),
+            call.dragTo(*end_position, duration=0.1, button="left", mouseDownUp=False),
+            call.mouseUp(button="left"),
+        ]
         assert mock_mouse.position == end_position

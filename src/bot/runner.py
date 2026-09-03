@@ -42,4 +42,4 @@ class CaptureApp:
         while not self._shutdown.wait(interval):
             frame = self._screen.capture()
             state = self._extractor.extract(frame)
-            self._joiner.join(state.stations)
+            self._joiner.join(state)
