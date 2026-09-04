@@ -8,41 +8,46 @@ from src.domain import models
 from src.domain import types
 from src.vision import config
 from src.vision import contour_extraction
+from src.vision import polyline_extraction
 
 
 logger = logging.getLogger(__name__)
 
 
 class LineDetector:
-    def __init__(self, contour_extractor: contour_extraction.ContourExtractor):
-        self.contour_extractor = contour_extractor
+    def __init__(
+        self,
+        line_polyline_extractor: polyline_extraction.PolylineExtractor,
+    ):
+        self.line_polyline_extractor = line_polyline_extractor
 
     def detect(
         self,
         frame: types.Frame,
         stations: List[models.Station],
     ) -> List[models.Line]:
-        contours = self.contour_extractor.extract(frame)
-        lines = [self._create_line(contour, stations) for contour in contours]
+        polylines = self.line_polyline_extractor.extract(frame)
+        lines = [self._create_line(polyline, stations) for polyline in polylines]
         logger.info("Detected %d lines", len(lines))
         return lines
 
     def _create_line(
         self,
-        contour: types.Contour,
+        polyline: types.Polyline,
         stations: List[models.Station],
     ) -> models.Line:
-        matched_stations = self._find_stations(contour, stations)
-        station_ids = self._order_stations(contour, matched_stations)
+        matched_stations = self._find_stations(polyline, stations)
+        station_ids = self._order_stations(polyline, matched_stations)
         logger.info("Detected line with %d stations", len(station_ids))
         return models.Line(station_ids=station_ids)
 
     def _find_stations(
         self,
-        contour: types.Contour,
+        polyline: types.Polyline,
         stations: List[models.Station],
     ) -> List[models.Station]:
-        """Return the stations that are contained within the given contour."""
+        """Return the stations that are contained within the given polyline."""
+        contour = polyline.reshape(-1, 1, 2)
         return [
             station
             for station in stations
@@ -52,46 +57,55 @@ class LineDetector:
 
     def _order_stations(
         self,
-        contour: types.Contour,
+        polyline: types.Polyline,
         stations: List[models.Station],
     ) -> List[types.StationId]:
-        """Return the station IDs ordered by their position along the contour."""
+        """Return station IDs ordered by their position along the polyline."""
         return [
             station.id
             for station in sorted(
                 stations,
-                key=lambda station: self._contour_position(contour, station),
+                key=lambda station: self._polyline_position(polyline, station),
             )
         ]
 
-    def _contour_position(
+    def _polyline_position(
         self,
-        contour: types.Contour,
+        polyline: types.Polyline,
         station: models.Station,
     ) -> int:
-        """Return the index of the contour point closest to the station."""
+        """Return the index of the polyline point closest to the station."""
         return min(
-            range(len(contour)),
-            key=lambda index: cv2.norm(contour[index][0], np.array(station.position)),
+            range(len(polyline)),
+            key=lambda index: cv2.norm(polyline[index], np.array(station.position)),
         )
 
 
-def build_line_detector() -> LineDetector:
+def build_line_polyline_extractor() -> polyline_extraction.PolylineExtractor:
     colour_mask_extractor = contour_extraction.ColourMaskExtractor(
         colour=config.LINE_COLOUR,
         mask_tolerance=config.MASK_TOLERANCE,
     )
-    dilating_mask_extractor = contour_extraction.DilatingMaskExtractor(
+    closing_mask_extractor = contour_extraction.MorphologicalClosingMaskExtractor(
         mask_extractor=colour_mask_extractor,
-        dilation_size=config.LINE_DILATION_SIZE,
+        kernel_size=config.LINE_CLOSING_SIZE,
     )
-    skeleton_mask_extractor = contour_extraction.SkeletonMaskExtractor(
-        mask_extractor=dilating_mask_extractor,
+    mask_skeleton_extractor = polyline_extraction.MaskSkeletonExtractor(
+        mask_extractor=closing_mask_extractor,
     )
-    contour_extractor = contour_extraction.ContourExtractor(
-        mask_extractor=skeleton_mask_extractor,
-        min_area=0,  # Skeletonized lines are 1px wide and have near-zero area
+    longest_skeleton_extractor = polyline_extraction.LongestSkeletonExtraction(
+        skeleton_extractor=mask_skeleton_extractor,
     )
+    skeleton_polyline_extractor = polyline_extraction.SkeletonPolylineExtractor(
+        skeleton_extractor=longest_skeleton_extractor,
+    )
+    greedy_polyline_extractor = polyline_extraction.GreedyPolylineExtractor(
+        polyline_extractor=skeleton_polyline_extractor,
+    )
+    return greedy_polyline_extractor
+
+
+def build_line_detector() -> LineDetector:
     return LineDetector(
-        contour_extractor=contour_extractor,
+        line_polyline_extractor=build_line_polyline_extractor(),
     )

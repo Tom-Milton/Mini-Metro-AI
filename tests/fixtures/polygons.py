@@ -27,10 +27,10 @@ def draw_rectangle(
     width: int,
     height: int,
     colour: types.Colour = (255, 255, 255),
-    frame_size: int = 100,
+    padding: int = 0,
 ) -> types.Frame:
-    frame = np.zeros((frame_size, frame_size, 3), dtype=np.uint8)
-    top = (frame_size - height) // 2
-    left = (frame_size - width) // 2
-    frame[top : top + height, left : left + width] = colour
+    frame_width = width + 2 * padding
+    frame_height = height + 2 * padding
+    frame = np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
+    frame[padding : padding + height, padding : padding + width] = colour
     return frame

@@ -1,19 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Sequence, cast
+from typing import Sequence
 
 import cv2
 import numpy as np
-import skimage.morphology
 
 from src.domain import types
-from src.vision import config
-
-
-# scikit-image does not expose a complete type signature for this function.
-_typed_skeletonize = cast(
-    Callable[[np.ndarray], np.ndarray],
-    getattr(skimage.morphology, "skeletonize"),
-)
 
 
 class MaskExtractor(ABC):
@@ -45,20 +36,31 @@ class DilatingMaskExtractor(MaskExtractor):
         return cv2.dilate(mask, kernel)
 
 
-class SkeletonMaskExtractor(MaskExtractor):
-    def __init__(self, mask_extractor: MaskExtractor):
+class MorphologicalClosingMaskExtractor(MaskExtractor):
+    def __init__(self, mask_extractor: MaskExtractor, kernel_size: int):
         self.mask_extractor = mask_extractor
+        self.kernel_size = kernel_size
 
     def extract(self, frame: types.Frame) -> types.Mask:
         mask = self.mask_extractor.extract(frame)
-        return _typed_skeletonize(mask > 0).astype(np.uint8) * 255
+        kernel = cv2.getStructuringElement(
+            cv2.MORPH_RECT,
+            (self.kernel_size, self.kernel_size),
+        )
+        return cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
 
-class ContourExtractor:
+class ContourExtractor(ABC):
+    @abstractmethod
+    def extract(self, frame: types.Frame) -> Sequence[types.Contour]:
+        pass
+
+
+class MaskContourExtractor(ContourExtractor):
     def __init__(
         self,
         mask_extractor: MaskExtractor,
-        min_area: float = config.MIN_CONTOUR_AREA,
+        min_area: float,
     ):
         self.mask_extractor = mask_extractor
         self.min_area = min_area

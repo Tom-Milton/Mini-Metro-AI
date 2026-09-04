@@ -3,27 +3,39 @@ import pytest
 from typing import TypedDict
 
 from src.domain import types
-from src.vision import config
 from src.vision import contour_extraction
 from tests.fixtures import polygons
 
 
-class TestMaskExtractor:
-    __test__ = False
+class TestColourMaskExtractor:
+    @pytest.fixture
+    def extractor(self) -> contour_extraction.ColourMaskExtractor:
+        return contour_extraction.ColourMaskExtractor(
+            colour=(100, 100, 100),
+            mask_tolerance=0,
+        )
 
     @pytest.fixture
     def input_frame(self) -> types.Frame:
-        # Small regular polygons produce unintuitive skeletons, so use a 5x1 rectangle.
         return polygons.draw_rectangle(
-            width=5,
-            height=1,
-            colour=config.LINE_COLOUR,
-            frame_size=9,
+            width=3,
+            height=3,
+            colour=(100, 100, 100),
+            padding=3,
         )
+
+    @pytest.fixture
+    def expected_mask(self) -> types.Mask:
+        return polygons.draw_rectangle(
+            width=3,
+            height=3,
+            colour=(255, 255, 255),
+            padding=3,
+        )[:, :, 0]
 
     def test_extract(
         self,
-        extractor: contour_extraction.MaskExtractor,
+        extractor: contour_extraction.ColourMaskExtractor,
         input_frame: types.Frame,
         expected_mask: types.Mask,
     ) -> None:
@@ -31,38 +43,65 @@ class TestMaskExtractor:
         assert np.array_equal(observed_mask, expected_mask)
 
 
-class TestColourMaskExtractor(TestMaskExtractor):
-    __test__ = True
+class TestDilatingMaskExtractor:
+    @pytest.fixture
+    def extractor(self) -> contour_extraction.DilatingMaskExtractor:
+        return contour_extraction.DilatingMaskExtractor(
+            mask_extractor=contour_extraction.ColourMaskExtractor(
+                colour=(100, 100, 100),
+                mask_tolerance=0,
+            ),
+            dilation_size=3,
+        )
 
     @pytest.fixture
-    def extractor(self) -> contour_extraction.ColourMaskExtractor:
-        return contour_extraction.ColourMaskExtractor(
-            colour=config.LINE_COLOUR,
-            mask_tolerance=0,
+    def input_frame(self) -> types.Frame:
+        return polygons.draw_rectangle(
+            width=3,
+            height=3,
+            colour=(100, 100, 100),
+            padding=3,
         )
 
     @pytest.fixture
     def expected_mask(self) -> types.Mask:
         return polygons.draw_rectangle(
             width=5,
-            height=1,
+            height=5,
             colour=(255, 255, 255),
-            frame_size=9,
+            padding=2,
         )[:, :, 0]
 
+    def test_extract(
+        self,
+        extractor: contour_extraction.DilatingMaskExtractor,
+        input_frame: types.Frame,
+        expected_mask: types.Mask,
+    ) -> None:
+        observed_mask = extractor.extract(input_frame)
+        assert np.array_equal(observed_mask, expected_mask)
 
-class TestDilatingMaskExtractor(TestMaskExtractor):
-    __test__ = True
 
+class TestMorphologicalClosingMaskExtractor:
     @pytest.fixture
-    def extractor(self) -> contour_extraction.DilatingMaskExtractor:
-        return contour_extraction.DilatingMaskExtractor(
+    def extractor(self) -> contour_extraction.MorphologicalClosingMaskExtractor:
+        return contour_extraction.MorphologicalClosingMaskExtractor(
             mask_extractor=contour_extraction.ColourMaskExtractor(
-                colour=config.LINE_COLOUR,
+                colour=(100, 100, 100),
                 mask_tolerance=0,
             ),
-            dilation_size=3,
+            kernel_size=3,
         )
+
+    @pytest.fixture
+    def input_frame(self) -> types.Frame:
+        rectangle = polygons.draw_rectangle(
+            width=3,
+            height=3,
+            colour=(100, 100, 100),
+        )
+        gap = np.zeros((3, 1, 3), dtype=np.uint8)
+        return np.hstack((rectangle, gap, rectangle))
 
     @pytest.fixture
     def expected_mask(self) -> types.Mask:
@@ -70,30 +109,16 @@ class TestDilatingMaskExtractor(TestMaskExtractor):
             width=7,
             height=3,
             colour=(255, 255, 255),
-            frame_size=9,
         )[:, :, 0]
 
-
-class TestSkeletonMaskExtractor(TestMaskExtractor):
-    __test__ = True
-
-    @pytest.fixture
-    def extractor(self) -> contour_extraction.SkeletonMaskExtractor:
-        return contour_extraction.SkeletonMaskExtractor(
-            mask_extractor=contour_extraction.ColourMaskExtractor(
-                colour=config.LINE_COLOUR,
-                mask_tolerance=0,
-            ),
-        )
-
-    @pytest.fixture
-    def expected_mask(self) -> types.Mask:
-        return polygons.draw_rectangle(
-            width=5,
-            height=1,
-            colour=(255, 255, 255),
-            frame_size=9,
-        )[:, :, 0]
+    def test_extract(
+        self,
+        extractor: contour_extraction.MorphologicalClosingMaskExtractor,
+        input_frame: types.Frame,
+        expected_mask: types.Mask,
+    ) -> None:
+        observed_mask = extractor.extract(input_frame)
+        assert np.array_equal(observed_mask, expected_mask)
 
 
 class ContourCase(TypedDict):
@@ -109,13 +134,13 @@ TEST_CASES = [
 
 class TestContourExtractor:
     @pytest.fixture
-    def extractor(self) -> contour_extraction.ContourExtractor:
-        mask_extractor = contour_extraction.ColourMaskExtractor(
-            colour=config.STATION_COLOUR,
-            mask_tolerance=config.MASK_TOLERANCE,
-        )
-        return contour_extraction.ContourExtractor(
-            mask_extractor=mask_extractor,
+    def extractor(self) -> contour_extraction.MaskContourExtractor:
+        return contour_extraction.MaskContourExtractor(
+            mask_extractor=contour_extraction.ColourMaskExtractor(
+                colour=(100, 100, 100),
+                mask_tolerance=5,
+            ),
+            min_area=5.0,
         )
 
     @pytest.fixture(params=TEST_CASES)
@@ -128,11 +153,11 @@ class TestContourExtractor:
 
     @pytest.fixture
     def input_frame(self, sides: int) -> types.Frame:
-        return polygons.draw_polygon(sides=sides, colour=config.STATION_COLOUR)
+        return polygons.draw_polygon(sides=sides, colour=(100, 100, 100))
 
     def test_extract(
         self,
-        extractor: contour_extraction.ContourExtractor,
+        extractor: contour_extraction.MaskContourExtractor,
         input_frame: types.Frame,
     ) -> None:
         observed_contours = extractor.extract(input_frame)

@@ -19,12 +19,12 @@ _VERTICES_TO_SHAPE: dict[int, types.StationShape] = {
 class StationDetector:
     def __init__(
         self,
-        contour_extractor: contour_extraction.ContourExtractor,
+        station_contour_extractor: contour_extraction.ContourExtractor,
     ):
-        self.contour_extractor = contour_extractor
+        self.station_contour_extractor = station_contour_extractor
 
     def detect(self, frame: types.Frame) -> List[models.Station]:
-        contours = self.contour_extractor.extract(frame)
+        contours = self.station_contour_extractor.extract(frame)
         stations = [self._create_station(contour) for contour in contours]
         logger.info("Detected %d stations", len(stations))
         return stations
@@ -52,14 +52,19 @@ class StationDetector:
         return _VERTICES_TO_SHAPE.get(len(polygon), types.StationShape.CIRCLE)
 
 
-def build_station_detector() -> StationDetector:
+def build_station_contour_extractor() -> contour_extraction.ContourExtractor:
     mask_extractor = contour_extraction.ColourMaskExtractor(
         colour=config.STATION_COLOUR,
         mask_tolerance=config.MASK_TOLERANCE,
     )
-    contour_extractor = contour_extraction.ContourExtractor(
+    mask_contour_extractor = contour_extraction.MaskContourExtractor(
         mask_extractor=mask_extractor,
+        min_area=config.MIN_CONTOUR_AREA,
     )
+    return mask_contour_extractor
+
+
+def build_station_detector() -> StationDetector:
     return StationDetector(
-        contour_extractor=contour_extractor,
+        station_contour_extractor=build_station_contour_extractor(),
     )
