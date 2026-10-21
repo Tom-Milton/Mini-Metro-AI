@@ -26,7 +26,7 @@ def run() -> None:
             station_detector=station_detection.build_station_detector(),
             line_detector=line_detection.build_line_detector(),
         ),
-        joiner=station_joiner.StationJoiner(None),
+        joiner=station_joiner.build_station_joiner(),
         keyboard=escape_listener.EscapeListener(on_escape=shutdown.stop),
         shutdown=shutdown,
     )

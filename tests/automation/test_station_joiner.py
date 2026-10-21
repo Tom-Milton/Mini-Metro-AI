@@ -35,13 +35,35 @@ TEST_CASES = [
 
 
 class TestStationJoiner:
+    @pytest.fixture(
+        params=[
+            pytest.param(station_joiner.AppendRouteBuilder, id="append"),
+            pytest.param(
+                station_joiner.NearestNeighbourRouteBuilder,
+                id="nearest-neighbour",
+            ),
+        ]
+    )
+    def builder_type(
+        self,
+        request: pytest.FixtureRequest,
+    ) -> type[station_joiner.RouteBuilder]:
+        return request.param
+
     @pytest.fixture
     def mock_mouse_controller(self) -> Mock:
         return Mock()
 
     @pytest.fixture
-    def joiner(self, mock_mouse_controller: Mock) -> station_joiner.StationJoiner:
-        return station_joiner.StationJoiner(mock_mouse_controller)
+    def joiner(
+        self,
+        builder_type: type[station_joiner.RouteBuilder],
+        mock_mouse_controller: Mock,
+    ) -> station_joiner.StationJoiner:
+        return station_joiner.StationJoiner(
+            route_builder=builder_type(),
+            mouse=mock_mouse_controller,
+        )
 
     @pytest.fixture
     def stations(self) -> list[models.Station]:
