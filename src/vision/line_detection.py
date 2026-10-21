@@ -9,6 +9,7 @@ from src.domain import types
 from src.vision import config
 from src.vision import contour_extraction
 from src.vision import polyline_extraction
+from src.vision import skeleton_extraction
 
 
 logger = logging.getLogger(__name__)
@@ -90,10 +91,10 @@ def build_line_polyline_extractor() -> polyline_extraction.PolylineExtractor:
         mask_extractor=colour_mask_extractor,
         kernel_size=config.LINE_CLOSING_SIZE,
     )
-    mask_skeleton_extractor = polyline_extraction.MaskSkeletonExtractor(
+    mask_skeleton_extractor = skeleton_extraction.MaskSkeletonExtractor(
         mask_extractor=closing_mask_extractor,
     )
-    longest_skeleton_extractor = polyline_extraction.LongestSkeletonExtraction(
+    longest_skeleton_extractor = skeleton_extraction.LongestSkeletonExtraction(
         skeleton_extractor=mask_skeleton_extractor,
     )
     skeleton_polyline_extractor = polyline_extraction.SkeletonPolylineExtractor(
