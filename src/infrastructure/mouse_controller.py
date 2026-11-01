@@ -10,6 +10,9 @@ class MouseController:
     def __init__(self, controller: ModuleType = pyautogui) -> None:
         self._mouse = controller
 
+    def click(self, position: types.Position) -> None:
+        self._mouse.click(*position, button="left")
+
     def join(self, positions: list[types.Position]) -> None:
         self._mouse.moveTo(*positions[0])
         self._mouse.mouseDown(button="left")

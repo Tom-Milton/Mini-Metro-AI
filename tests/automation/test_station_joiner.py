@@ -4,6 +4,7 @@ from typing import TypedDict
 import pytest
 
 from src.automation import station_joiner
+from src.automation import menu_selector
 from src.domain import models
 from src.domain import types
 
@@ -55,14 +56,20 @@ class TestStationJoiner:
         return Mock()
 
     @pytest.fixture
+    def selector(self, mock_mouse_controller: Mock) -> menu_selector.MenuSelector:
+        return menu_selector.MenuSelector(mouse=mock_mouse_controller)
+
+    @pytest.fixture
     def joiner(
         self,
         builder_type: type[station_joiner.RouteBuilder],
         mock_mouse_controller: Mock,
+        selector: menu_selector.MenuSelector,
     ) -> station_joiner.StationJoiner:
         return station_joiner.StationJoiner(
             route_builder=builder_type(),
             mouse=mock_mouse_controller,
+            selector=selector,
         )
 
     @pytest.fixture
@@ -92,21 +99,36 @@ class TestStationJoiner:
             return []
 
     @pytest.fixture
+    def menu(self) -> models.Menu:
+        return models.Menu(
+            line_id="yellow", position=(50, 100), state=types.MenuState.ACTIVE
+        )
+
+    @pytest.fixture
     def game_state(
         self,
         stations: list[models.Station],
         lines: list[models.Line],
+        menu: models.Menu,
     ) -> models.GameState:
         return models.GameState(
             stations=stations,
             lines=lines,
-            menus=[],
+            menus={menu.line_id: menu},
         )
 
     @pytest.fixture
-    def expected_calls(self, test_case: JoinCase) -> list[object]:
+    def expected_calls(
+        self, test_case: JoinCase, game_state: models.GameState
+    ) -> list[object]:
         expected_positions = test_case["expected_positions"]
-        return [call(expected_positions)] if expected_positions else []
+        if expected_positions:
+            return [
+                call.click(game_state.menus["yellow"].position),
+                call.join(expected_positions),
+            ]
+        else:
+            return []
 
     def test_join(
         self,
@@ -116,4 +138,4 @@ class TestStationJoiner:
         expected_calls: list[object],
     ) -> None:
         joiner.join(game_state)
-        assert mock_mouse_controller.join.call_args_list == expected_calls
+        assert mock_mouse_controller.mock_calls == expected_calls

@@ -30,7 +30,7 @@ class GameStateExtractor:
         return models.GameState(
             stations=stations,
             lines=lines,
-            menus=[menu],
+            menus={menu.line_id: menu},
         )
 
     def _split_frame(self, frame: types.Frame) -> tuple[types.Frame, types.Frame]:

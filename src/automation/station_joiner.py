@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from src.domain import models
 from src.domain import types
 from src.infrastructure import mouse_controller
+from src.automation import menu_selector
 
 
 logger = logging.getLogger(__name__)
@@ -98,11 +99,13 @@ class NearestNeighbourRouteBuilder(RouteBuilder):
 class StationJoiner:
     def __init__(
         self,
-        route_builder: RouteBuilder | None = None,
-        mouse: mouse_controller.MouseController | None = None,
+        route_builder: RouteBuilder,
+        selector: menu_selector.MenuSelector,
+        mouse: mouse_controller.MouseController,
     ) -> None:
-        self._route_builder = route_builder or NearestNeighbourRouteBuilder()
-        self._mouse_controller = mouse or mouse_controller.MouseController()
+        self._route_builder = route_builder
+        self._mouse_controller = mouse
+        self._selector = selector
 
     def join(self, game_state: models.GameState) -> None:
         new_stations = self._find_unjoined_stations(game_state)
@@ -115,6 +118,7 @@ class StationJoiner:
         else:
             route = [station.position for station in new_stations]
 
+        self._selector.select(game_state.menus["yellow"])
         self._mouse_controller.join(route)
         logger.info("Joined %d stations", len(new_stations))
 
@@ -131,5 +135,7 @@ class StationJoiner:
 
 def build_station_joiner() -> StationJoiner:
     return StationJoiner(
+        selector=menu_selector.build_menu_selector(),
         route_builder=NearestNeighbourRouteBuilder(),
+        mouse=mouse_controller.MouseController(),
     )

@@ -17,7 +17,7 @@ LINE_MASK_TOLERANCE: int = 15  # Colour tolerance for line masking
 LINE_DILATION_SIZE: int = 25  # Expand the mask to connect nearby line segments
 MASK_CLOSING_KERNEL_SIZE: int = 50  # Fill small gaps and holes in the mask
 MIN_SKELETON_COMPONENT_SIZE: int = 250  # Minimum size of retained components
-MAX_STATION_LINE_DISTANCE: int = 5  # Match stations near the skeleton line
+MAX_STATION_LINE_DISTANCE: int = 10  # Match stations near the skeleton line
 
 # Menu detection
 MENU_AVAILABLE_DIAMETER_RATIO: float = 0.027  # Available button diameter / frame height

@@ -26,11 +26,11 @@
       ]
     }
   ],
-  "menus": [
-    {
-      "position": [776, 1024],
+  "menus": {
+    "yellow": {
       "line_id": "yellow",
+      "position": [776, 1024],
       "state": "active"
     }
-  ]
+  }
 }

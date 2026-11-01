@@ -32,6 +32,15 @@ class TestMouseController:
     def controller(self, mock_mouse: Mock) -> mouse_controller.MouseController:
         return mouse_controller.MouseController(mock_mouse)
 
+    def test_click(
+        self,
+        controller: mouse_controller.MouseController,
+        mock_mouse: Mock,
+        start_position: types.Position,
+    ) -> None:
+        controller.click(start_position)
+        assert mock_mouse.mock_calls == [call.click(*start_position, button="left")]
+
     def test_join(
         self,
         controller: mouse_controller.MouseController,

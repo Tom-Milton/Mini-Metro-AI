@@ -9,3 +9,5 @@
 - Every object should have only one dedicated test that covers the core responsibility of the object.
 - Use explicit settings for component tests; use config-backed builders for integration tests.
 - Prefer module imports for third-party packages and qualified access
+- Classes with builders must require their dependencies in __init__; construct dependencies in the builder instead of using fallbacks.
+- Prefer explicit if/else branches over early returns.

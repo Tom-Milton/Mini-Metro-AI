@@ -34,3 +34,4 @@ Position: TypeAlias = tuple[int, int]  # (x, y) coordinates
 DisplaySize: TypeAlias = tuple[int, int]  # (width, height) in pixels
 
 StationId: TypeAlias = str
+LineId: TypeAlias = str

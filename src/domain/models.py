@@ -25,12 +25,12 @@ class Line(BaseModel):
 
 
 class Menu(BaseModel):
+    line_id: types.LineId
     position: types.Position
-    line_id: str
     state: types.MenuState
 
 
 class GameState(BaseModel):
     stations: list[Station]
     lines: list[Line]
-    menus: list[Menu]
+    menus: dict[types.LineId, Menu]
