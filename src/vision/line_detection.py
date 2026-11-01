@@ -87,12 +87,12 @@ def build_line_polyline_extractor() -> polyline_extraction.PolylineExtractor:
         colour=config.LINE_COLOUR,
         mask_tolerance=config.MASK_TOLERANCE,
     )
-    closing_mask_extractor = contour_extraction.MorphologicalClosingMaskExtractor(
+    dilating_mask_extractor = contour_extraction.DilatingMaskExtractor(
         mask_extractor=colour_mask_extractor,
-        kernel_size=config.LINE_CLOSING_SIZE,
+        dilation_size=config.LINE_DILATION_SIZE,
     )
     mask_skeleton_extractor = skeleton_extraction.MaskSkeletonExtractor(
-        mask_extractor=closing_mask_extractor,
+        mask_extractor=dilating_mask_extractor,
     )
     longest_skeleton_extractor = skeleton_extraction.LongestSkeletonExtraction(
         skeleton_extractor=mask_skeleton_extractor,
