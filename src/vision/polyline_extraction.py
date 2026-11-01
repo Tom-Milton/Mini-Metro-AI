@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from itertools import combinations, product
 from typing import Sequence
 
+import networkx as nx
 import numpy as np
 import skan
 
@@ -10,36 +11,65 @@ from src.domain import types
 
 class PolylineExtractor(ABC):
     @abstractmethod
-    def extract(self, skeleton: skan.Skeleton) -> Sequence[types.Polyline]:
+    def extract(self, skeleton: skan.Skeleton) -> types.Polyline:
         pass
 
 
 class SkeletonPolylineExtractor(PolylineExtractor):
-    def extract(self, skeleton: skan.Skeleton) -> Sequence[types.Polyline]:
-        paths = (skeleton.path_coordinates(index) for index in range(skeleton.n_paths))
+    def extract(self, skeleton: skan.Skeleton) -> types.Polyline:
         # Convert Skan's (row, column) coordinates to the project's (x, y) order.
-        return [path[:, ::-1] for path in paths]
+        return skeleton.path_coordinates(0)[:, ::-1]
+
+
+class EulerianPolylineExtractor(PolylineExtractor):
+    def extract(self, skeleton: skan.Skeleton) -> types.Polyline:
+        graph = nx.from_scipy_sparse_array(skeleton.graph)
+        start_node, end_node = self._end_nodes(graph)
+        route = self._eulerian_route(graph, start_node, end_node)
+        coordinates = np.round(skeleton.coordinates[route]).astype(np.int32)
+        return coordinates[:, ::-1]
+
+    def _eulerian_route(
+        self, graph: nx.Graph, start_node: int, end_node: int
+    ) -> list[int]:
+        eulerian_graph = nx.eulerize(graph)
+        main_path = nx.shortest_path(graph, start_node, end_node, weight="weight")
+        self._remove_main_edges(eulerian_graph, main_path)
+        edges = list(nx.eulerian_path(eulerian_graph, source=start_node))
+        return [edges[0][0]] + [end for _, end in edges]
+
+    def _remove_main_edges(
+        self, eulerian_graph: nx.MultiGraph, main_path: list[int]
+    ) -> None:
+        """Remove the doubled main path so the route can have two endpoints."""
+        for start, end in zip(main_path, main_path[1:]):
+            eulerian_graph.remove_edge(start, end)
+
+    def _end_nodes(self, graph: nx.Graph) -> tuple[int, int]:
+        first_end = self._farthest_node(graph, next(iter(graph)))
+        second_end = self._farthest_node(graph, first_end)
+        return first_end, second_end
+
+    def _farthest_node(self, graph: nx.Graph, source: int) -> int:
+        lengths = nx.single_source_dijkstra_path_length(graph, source, weight="weight")
+        return max(lengths, key=lambda node: lengths[node])
 
 
 class PolylineTransformer(ABC):
     @abstractmethod
-    def transform(
-        self, polylines: Sequence[types.Polyline]
-    ) -> Sequence[types.Polyline]:
+    def transform(self, polylines: Sequence[types.Polyline]) -> types.Polyline:
         pass
 
 
 class GreedyPolylineTransformer(PolylineTransformer):
-    def transform(
-        self, polylines: Sequence[types.Polyline]
-    ) -> Sequence[types.Polyline]:
+    def transform(self, polylines: Sequence[types.Polyline]) -> types.Polyline:
         lines = list(polylines)
         while len(lines) > 1:
             first_index, second_index = self._find_closest_pair(lines)
             second = lines.pop(second_index)
             first = lines.pop(first_index)
             lines.append(self._merge_lines(first, second))
-        return lines
+        return lines[0]
 
     def _find_closest_pair(
         self,

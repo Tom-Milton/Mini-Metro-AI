@@ -1,4 +1,4 @@
-from typing import List, Sequence
+from typing import List
 import logging
 
 import cv2
@@ -23,9 +23,7 @@ class LinePolylineExtractor:
         dilating_mask_transformer: mask_extraction.DilatingMaskTransformer,
         morphological_closing_mask_transformer: mask_extraction.MorphologicalClosingMaskTransformer,
         mask_skeleton_extractor: skeleton_extraction.MaskSkeletonExtractor,
-        longest_skeleton_transformer: skeleton_extraction.LongestSkeletonTransformer,
-        skeleton_polyline_extractor: polyline_extraction.SkeletonPolylineExtractor,
-        greedy_polyline_transformer: polyline_extraction.GreedyPolylineTransformer,
+        eulerian_polyline_extractor: polyline_extraction.EulerianPolylineExtractor,
     ):
         self.station_colour_mask_extractor = station_colour_mask_extractor
         self.line_colour_mask_extractor = line_colour_mask_extractor
@@ -34,11 +32,9 @@ class LinePolylineExtractor:
             morphological_closing_mask_transformer
         )
         self.mask_skeleton_extractor = mask_skeleton_extractor
-        self.longest_skeleton_transformer = longest_skeleton_transformer
-        self.skeleton_polyline_extractor = skeleton_polyline_extractor
-        self.greedy_polyline_transformer = greedy_polyline_transformer
+        self.eulerian_polyline_extractor = eulerian_polyline_extractor
 
-    def extract(self, frame: types.Frame) -> Sequence[types.Polyline]:
+    def extract(self, frame: types.Frame) -> types.Polyline:
         station_mask = self.station_colour_mask_extractor.extract(frame)
         line_mask = self.line_colour_mask_extractor.extract(frame)
         combined_mask = self.dilating_mask_transformer.transform(
@@ -47,15 +43,8 @@ class LinePolylineExtractor:
         combined_mask = self.morphological_closing_mask_transformer.transform(
             combined_mask
         )
-
-        try:
-            raw_skeleton = self.mask_skeleton_extractor.extract(combined_mask)
-        except skeleton_extraction.NoSkeletonError:
-            return []
-
-        longest_skeleton = self.longest_skeleton_transformer.transform(raw_skeleton)
-        polylines = self.skeleton_polyline_extractor.extract(longest_skeleton)
-        return self.greedy_polyline_transformer.transform(polylines)
+        raw_skeleton = self.mask_skeleton_extractor.extract(combined_mask)
+        return self.eulerian_polyline_extractor.extract(raw_skeleton)
 
 
 class LineDetector:
@@ -70,8 +59,11 @@ class LineDetector:
         frame: types.Frame,
         stations: List[models.Station],
     ) -> List[models.Line]:
-        polylines = self.line_polyline_extractor.extract(frame)
-        lines = [self._create_line(polyline, stations) for polyline in polylines]
+        try:
+            polyline = self.line_polyline_extractor.extract(frame)
+        except skeleton_extraction.NoSkeletonError:
+            return []
+        lines = [self._create_line(polyline, stations)]
         logger.info("Detected %d lines", len(lines))
         return lines
 
@@ -104,14 +96,12 @@ class LineDetector:
         polyline: types.Polyline,
         stations: List[models.Station],
     ) -> List[types.StationId]:
-        """Return station IDs ordered by their position along the polyline."""
-        return [
-            station.id
-            for station in sorted(
-                stations,
-                key=lambda station: self._polyline_position(polyline, station),
-            )
-        ]
+        """Return station IDs in the order they occur along the polyline."""
+        stations = sorted(
+            stations,
+            key=lambda station: self._polyline_position(polyline, station),
+        )
+        return [station.id for station in stations]
 
     def _polyline_position(
         self,
@@ -146,9 +136,7 @@ def build_line_polyline_extractor() -> LinePolylineExtractor:
         mask_skeleton_extractor=skeleton_extraction.MaskSkeletonExtractor(
             min_component_size=config.MIN_SKELETON_COMPONENT_SIZE,
         ),
-        longest_skeleton_transformer=(skeleton_extraction.LongestSkeletonTransformer()),
-        skeleton_polyline_extractor=polyline_extraction.SkeletonPolylineExtractor(),
-        greedy_polyline_transformer=polyline_extraction.GreedyPolylineTransformer(),
+        eulerian_polyline_extractor=polyline_extraction.EulerianPolylineExtractor(),
     )
 
 

@@ -15,7 +15,7 @@ class TestLineDetector:
     @pytest.fixture
     def input_frame(self) -> types.Frame:
         return polygons.draw_rectangle(
-            width=100,
+            width=500,
             height=1,
             colour=config.LINE_COLOUR,
         )
@@ -23,14 +23,14 @@ class TestLineDetector:
     @pytest.fixture
     def stations(self) -> list[models.Station]:
         return [
-            models.Station(position=(25, 0), shape=types.StationShape.CIRCLE),
-            models.Station(position=(75, 0), shape=types.StationShape.SQUARE),
+            models.Station(position=(125, 0), shape=types.StationShape.CIRCLE),
+            models.Station(position=(375, 0), shape=types.StationShape.SQUARE),
         ]
 
     @pytest.fixture
     def expected_line(self) -> models.Line:
         return models.Line(
-            station_ids=["circle-25-0", "square-75-0"],
+            station_ids=["square-375-0", "circle-125-0"],
         )
 
     def test_detect(

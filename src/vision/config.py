@@ -8,8 +8,8 @@ STATION_COLOUR: types.Colour = (248, 248, 248)  # Station detection colour (BGR)
 LINE_COLOUR: types.Colour = (5, 204, 249)  # Yellow line colour (BGR)
 LINE_DILATION_SIZE: int = 25  # Expand the mask to connect nearby line segments
 MASK_CLOSING_KERNEL_SIZE: int = 50  # Fill small gaps and holes in the mask
-MIN_SKELETON_COMPONENT_SIZE: int = 50  # Minimum size of retained components
-MAX_STATION_LINE_DISTANCE: int = 50  # Match stations near the skeleton line
+MIN_SKELETON_COMPONENT_SIZE: int = 250  # Minimum size of retained components
+MAX_STATION_LINE_DISTANCE: int = 5  # Match stations near the skeleton line
 POLYGON_EPSILON_RATIO: float = (
     0.02  # Polygon approximation epsilon ratio (epsilon * perimeter)
 )
