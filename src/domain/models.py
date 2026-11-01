@@ -24,6 +24,13 @@ class Line(BaseModel):
     station_ids: list[types.StationId]
 
 
+class Menu(BaseModel):
+    position: types.Position
+    line_id: str
+    state: types.MenuState
+
+
 class GameState(BaseModel):
     stations: list[Station]
     lines: list[Line]
+    menus: list[Menu]

@@ -21,3 +21,16 @@ class MaskContourExtractor(ContourExtractor):
         return [
             contour for contour in contours if cv2.contourArea(contour) >= self.min_area
         ]
+
+
+def compute_centroid(contour: types.Contour) -> types.Position:
+    """m00 is area; m10 and m01 are x/y first moments used for centroid."""
+    moments = cv2.moments(contour)
+    if moments["m00"] == 0:
+        centroid = (0, 0)
+    else:
+        centroid = (
+            int(moments["m10"] / moments["m00"]),
+            int(moments["m01"] / moments["m00"]),
+        )
+    return types.Position(centroid)

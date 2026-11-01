@@ -5,6 +5,7 @@ import pytest
 from src.vision import game_state_extraction
 from src.vision import station_detection
 from src.vision import line_detection
+from src.vision import menu_detection
 from src.domain import models
 from src.domain import types
 from src.utils import gateways
@@ -19,6 +20,7 @@ class TestGameStateExtractor:
         return game_state_extraction.GameStateExtractor(
             station_detector=station_detection.build_station_detector(),
             line_detector=line_detection.build_line_detector(),
+            menu_detector=menu_detection.build_menu_detector(),
         )
 
     @pytest.fixture(params=list(FIXTURES_DIR.glob("*.png")), ids=lambda p: p.stem)

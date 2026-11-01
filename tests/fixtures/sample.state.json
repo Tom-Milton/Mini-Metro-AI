@@ -25,5 +25,12 @@
         "square-613-119"
       ]
     }
+  ],
+  "menus": [
+    {
+      "position": [776, 1024],
+      "line_id": "yellow",
+      "state": "active"
+    }
   ]
 }

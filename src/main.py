@@ -9,6 +9,7 @@ from src.infrastructure import shutdown_manager
 from src.vision import game_state_extraction
 from src.vision import station_detection
 from src.vision import line_detection
+from src.vision import menu_detection
 
 
 def run() -> None:
@@ -25,6 +26,7 @@ def run() -> None:
         extractor=game_state_extraction.GameStateExtractor(
             station_detector=station_detection.build_station_detector(),
             line_detector=line_detection.build_line_detector(),
+            menu_detector=menu_detection.build_menu_detector(),
         ),
         joiner=station_joiner.build_station_joiner(),
         keyboard=escape_listener.EscapeListener(on_escape=shutdown.stop),

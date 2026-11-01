@@ -4,6 +4,12 @@ from typing import TypeAlias, NamedTuple
 import numpy as np
 
 
+class MenuState(Enum):
+    AVAILABLE = "available"
+    ACTIVE = "active"
+    SELECTED = "selected"
+
+
 class ShapeProperties(NamedTuple):
     name: str
     vertices: int

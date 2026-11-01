@@ -100,6 +100,7 @@ class TestStationJoiner:
         return models.GameState(
             stations=stations,
             lines=lines,
+            menus=[],
         )
 
     @pytest.fixture
