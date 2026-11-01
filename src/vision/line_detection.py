@@ -18,29 +18,44 @@ logger = logging.getLogger(__name__)
 class LinePolylineExtractor:
     def __init__(
         self,
-        mask_extractor: mask_extraction.MaskExtractor,
-        mask_transformer: mask_extraction.MaskTransformer,
-        skeleton_extractor: skeleton_extraction.SkeletonExtractor,
-        skeleton_transformer: skeleton_extraction.SkeletonTransformer,
-        polyline_extractor: polyline_extraction.PolylineExtractor,
-        polyline_transformer: polyline_extraction.PolylineTransformer,
+        station_colour_mask_extractor: mask_extraction.ColourMaskExtractor,
+        line_colour_mask_extractor: mask_extraction.ColourMaskExtractor,
+        dilating_mask_transformer: mask_extraction.DilatingMaskTransformer,
+        morphological_closing_mask_transformer: mask_extraction.MorphologicalClosingMaskTransformer,
+        mask_skeleton_extractor: skeleton_extraction.MaskSkeletonExtractor,
+        longest_skeleton_transformer: skeleton_extraction.LongestSkeletonTransformer,
+        skeleton_polyline_extractor: polyline_extraction.SkeletonPolylineExtractor,
+        greedy_polyline_transformer: polyline_extraction.GreedyPolylineTransformer,
     ):
-        self.mask_extractor = mask_extractor
-        self.mask_transformer = mask_transformer
-        self.skeleton_extractor = skeleton_extractor
-        self.skeleton_transformer = skeleton_transformer
-        self.polyline_extractor = polyline_extractor
-        self.polyline_transformer = polyline_transformer
+        self.station_colour_mask_extractor = station_colour_mask_extractor
+        self.line_colour_mask_extractor = line_colour_mask_extractor
+        self.dilating_mask_transformer = dilating_mask_transformer
+        self.morphological_closing_mask_transformer = (
+            morphological_closing_mask_transformer
+        )
+        self.mask_skeleton_extractor = mask_skeleton_extractor
+        self.longest_skeleton_transformer = longest_skeleton_transformer
+        self.skeleton_polyline_extractor = skeleton_polyline_extractor
+        self.greedy_polyline_transformer = greedy_polyline_transformer
 
     def extract(self, frame: types.Frame) -> Sequence[types.Polyline]:
-        mask = self.mask_transformer.transform(self.mask_extractor.extract(frame))
+        station_mask = self.station_colour_mask_extractor.extract(frame)
+        line_mask = self.line_colour_mask_extractor.extract(frame)
+        combined_mask = self.dilating_mask_transformer.transform(
+            cv2.bitwise_or(line_mask, station_mask)
+        )
+        combined_mask = self.morphological_closing_mask_transformer.transform(
+            combined_mask
+        )
+
         try:
-            skeleton = self.skeleton_extractor.extract(mask)
+            raw_skeleton = self.mask_skeleton_extractor.extract(combined_mask)
         except skeleton_extraction.NoSkeletonError:
             return []
-        skeleton = self.skeleton_transformer.transform(skeleton)
-        polylines = self.polyline_extractor.extract(skeleton)
-        return self.polyline_transformer.transform(polylines)
+
+        longest_skeleton = self.longest_skeleton_transformer.transform(raw_skeleton)
+        polylines = self.skeleton_polyline_extractor.extract(longest_skeleton)
+        return self.greedy_polyline_transformer.transform(polylines)
 
 
 class LineDetector:
@@ -112,17 +127,28 @@ class LineDetector:
 
 def build_line_polyline_extractor() -> LinePolylineExtractor:
     return LinePolylineExtractor(
-        mask_extractor=mask_extraction.ColourMaskExtractor(
-            colour=config.LINE_COLOUR,
-            mask_tolerance=config.MASK_TOLERANCE,
+        station_colour_mask_extractor=mask_extraction.ColourMaskExtractor(
+            colour=config.STATION_COLOUR,
+            mask_tolerance=config.STATION_MASK_TOLERANCE,
         ),
-        mask_transformer=mask_extraction.DilatingMaskTransformer(
+        line_colour_mask_extractor=mask_extraction.ColourMaskExtractor(
+            colour=config.LINE_COLOUR,
+            mask_tolerance=config.LINE_MASK_TOLERANCE,
+        ),
+        dilating_mask_transformer=mask_extraction.DilatingMaskTransformer(
             dilation_size=config.LINE_DILATION_SIZE,
         ),
-        skeleton_extractor=skeleton_extraction.MaskSkeletonExtractor(),
-        skeleton_transformer=skeleton_extraction.LongestSkeletonTransformer(),
-        polyline_extractor=polyline_extraction.SkeletonPolylineExtractor(),
-        polyline_transformer=polyline_extraction.GreedyPolylineTransformer(),
+        morphological_closing_mask_transformer=(
+            mask_extraction.MorphologicalClosingMaskTransformer(
+                kernel_size=config.MASK_CLOSING_KERNEL_SIZE,
+            )
+        ),
+        mask_skeleton_extractor=skeleton_extraction.MaskSkeletonExtractor(
+            min_component_size=config.MIN_SKELETON_COMPONENT_SIZE,
+        ),
+        longest_skeleton_transformer=(skeleton_extraction.LongestSkeletonTransformer()),
+        skeleton_polyline_extractor=polyline_extraction.SkeletonPolylineExtractor(),
+        greedy_polyline_transformer=polyline_extraction.GreedyPolylineTransformer(),
     )
 
 

@@ -20,6 +20,10 @@ class NoSkeletonError(Exception):
     """Raised when a mask has too few pixels to form a skan.Skeleton."""
 
 
+class MultipleSkeletonError(Exception):
+    """Raised when a skeleton contains more than one connected component."""
+
+
 class SkeletonExtractor(ABC):
     @abstractmethod
     def extract(self, mask: types.Mask) -> skan.Skeleton:
@@ -27,10 +31,22 @@ class SkeletonExtractor(ABC):
 
 
 class MaskSkeletonExtractor(SkeletonExtractor):
+    def __init__(self, min_component_size: int):
+        self.min_component_size = min_component_size
+
     def extract(self, mask: types.Mask) -> skan.Skeleton:
         skeleton_image = _typed_skeletonize(mask > 0)
-        if np.count_nonzero(skeleton_image) == 0:
+        skeleton_image = skimage.morphology.remove_small_objects(
+            skeleton_image,
+            max_size=self.min_component_size - 1,
+            connectivity=2,
+        )
+        components = skimage.morphology.label(skeleton_image, connectivity=2)
+        component_count = int(np.max(components))
+        if component_count == 0:
             raise NoSkeletonError
+        if component_count > 1:
+            raise MultipleSkeletonError
         return skan.Skeleton(skeleton_image)
 
 
