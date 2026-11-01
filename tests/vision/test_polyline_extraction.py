@@ -1,83 +1,63 @@
 import numpy as np
 import pytest
+import skan
 
 from src.domain import types
-from src.vision import contour_extraction
 from src.vision import polyline_extraction
-from src.vision import skeleton_extraction
 from tests.fixtures import polygons
 
 
 class TestPolylineExtractor:
     @pytest.fixture
     def extractor(self) -> polyline_extraction.SkeletonPolylineExtractor:
-        return polyline_extraction.SkeletonPolylineExtractor(
-            skeleton_extractor=skeleton_extraction.MaskSkeletonExtractor(
-                mask_extractor=contour_extraction.ColourMaskExtractor(
-                    colour=(100, 100, 100),
-                    mask_tolerance=0,
-                ),
-            ),
-        )
+        return polyline_extraction.SkeletonPolylineExtractor()
 
     @pytest.fixture
-    def input_frame(self) -> types.Frame:
-        return polygons.draw_rectangle(
-            width=5,
-            height=1,
-            colour=(100, 100, 100),
-            padding=3,
-        )
+    def input_skeleton(self) -> skan.Skeleton:
+        frame = polygons.draw_t_shape(bar_length=5, spur_length=2)
+        return skan.Skeleton(frame[:, :, 0] > 0)
 
     @pytest.fixture
-    def expected_polyline(self) -> types.Polyline:
-        return np.array([[3, 3], [4, 3], [5, 3], [6, 3], [7, 3]])
+    def expected_polylines(self) -> list[types.Polyline]:
+        return [
+            np.array([[2, 0], [2, 1], [2, 2]]),  # Spur.
+            np.array([[0, 2], [1, 2], [2, 2]]),  # Left bar.
+            np.array([[2, 2], [3, 2], [4, 2]]),  # Right bar.
+        ]
 
     def test_extract(
         self,
         extractor: polyline_extraction.SkeletonPolylineExtractor,
-        input_frame: types.Frame,
-        expected_polyline: types.Polyline,
+        input_skeleton: skan.Skeleton,
+        expected_polylines: list[types.Polyline],
     ) -> None:
-        polylines = extractor.extract(input_frame)
-        assert np.array_equal(polylines[0], expected_polyline)
+        polylines = extractor.extract(input_skeleton)
+        assert np.array_equal(polylines, expected_polylines)
 
 
-class TestGreedyPolylineExtractor:
+class TestGreedyPolylineTransformer:
     @pytest.fixture
-    def extractor(self) -> polyline_extraction.GreedyPolylineExtractor:
-        return polyline_extraction.GreedyPolylineExtractor(
-            polyline_extractor=polyline_extraction.SkeletonPolylineExtractor(
-                skeleton_extractor=skeleton_extraction.MaskSkeletonExtractor(
-                    mask_extractor=contour_extraction.ColourMaskExtractor(
-                        colour=(100, 100, 100),
-                        mask_tolerance=0,
-                    ),
-                ),
-            ),
-        )
+    def transform(self) -> polyline_extraction.GreedyPolylineTransformer:
+        return polyline_extraction.GreedyPolylineTransformer()
 
     @pytest.fixture
-    def input_frame(self) -> types.Frame:
-        segment = polygons.draw_rectangle(
-            width=5,
-            height=1,
-            colour=(100, 100, 100),
-        )
-        gap = np.zeros((1, 1, 3), dtype=np.uint8)
-        return np.hstack((segment, gap, segment))
+    def input_polylines(self) -> list[types.Polyline]:
+        return [
+            np.array([[index, 0] for index in range(0, 5)]),
+            np.array([[index, 0] for index in range(6, 11)]),
+        ]
 
     @pytest.fixture
     def expected_polyline(self) -> types.Polyline:
         return np.array([[index, 0] for index in range(11)])
 
-    def test_extract(
+    def test_transform(
         self,
-        extractor: polyline_extraction.GreedyPolylineExtractor,
-        input_frame: types.Frame,
+        transform: polyline_extraction.GreedyPolylineTransformer,
+        input_polylines: list[types.Polyline],
         expected_polyline: types.Polyline,
     ) -> None:
-        polylines = extractor.extract(input_frame)
+        polylines = transform.transform(input_polylines)
         assert np.array_equal(polylines[0], expected_polyline) or np.array_equal(
             polylines[0], expected_polyline[::-1]
-        )
+        )  # Either direction.

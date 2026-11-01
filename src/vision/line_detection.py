@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Sequence
 import logging
 
 import cv2
@@ -7,7 +7,7 @@ import numpy as np
 from src.domain import models
 from src.domain import types
 from src.vision import config
-from src.vision import contour_extraction
+from src.vision import mask_extraction
 from src.vision import polyline_extraction
 from src.vision import skeleton_extraction
 
@@ -15,10 +15,38 @@ from src.vision import skeleton_extraction
 logger = logging.getLogger(__name__)
 
 
+class LinePolylineExtractor:
+    def __init__(
+        self,
+        mask_extractor: mask_extraction.MaskExtractor,
+        mask_transformer: mask_extraction.MaskTransformer,
+        skeleton_extractor: skeleton_extraction.SkeletonExtractor,
+        skeleton_transformer: skeleton_extraction.SkeletonTransformer,
+        polyline_extractor: polyline_extraction.PolylineExtractor,
+        polyline_transformer: polyline_extraction.PolylineTransformer,
+    ):
+        self.mask_extractor = mask_extractor
+        self.mask_transformer = mask_transformer
+        self.skeleton_extractor = skeleton_extractor
+        self.skeleton_transformer = skeleton_transformer
+        self.polyline_extractor = polyline_extractor
+        self.polyline_transformer = polyline_transformer
+
+    def extract(self, frame: types.Frame) -> Sequence[types.Polyline]:
+        mask = self.mask_transformer.transform(self.mask_extractor.extract(frame))
+        try:
+            skeleton = self.skeleton_extractor.extract(mask)
+        except skeleton_extraction.NoSkeletonError:
+            return []
+        skeleton = self.skeleton_transformer.transform(skeleton)
+        polylines = self.polyline_extractor.extract(skeleton)
+        return self.polyline_transformer.transform(polylines)
+
+
 class LineDetector:
     def __init__(
         self,
-        line_polyline_extractor: polyline_extraction.PolylineExtractor,
+        line_polyline_extractor: LinePolylineExtractor,
     ):
         self.line_polyline_extractor = line_polyline_extractor
 
@@ -82,28 +110,20 @@ class LineDetector:
         )
 
 
-def build_line_polyline_extractor() -> polyline_extraction.PolylineExtractor:
-    colour_mask_extractor = contour_extraction.ColourMaskExtractor(
-        colour=config.LINE_COLOUR,
-        mask_tolerance=config.MASK_TOLERANCE,
+def build_line_polyline_extractor() -> LinePolylineExtractor:
+    return LinePolylineExtractor(
+        mask_extractor=mask_extraction.ColourMaskExtractor(
+            colour=config.LINE_COLOUR,
+            mask_tolerance=config.MASK_TOLERANCE,
+        ),
+        mask_transformer=mask_extraction.DilatingMaskTransformer(
+            dilation_size=config.LINE_DILATION_SIZE,
+        ),
+        skeleton_extractor=skeleton_extraction.MaskSkeletonExtractor(),
+        skeleton_transformer=skeleton_extraction.LongestSkeletonTransformer(),
+        polyline_extractor=polyline_extraction.SkeletonPolylineExtractor(),
+        polyline_transformer=polyline_extraction.GreedyPolylineTransformer(),
     )
-    dilating_mask_extractor = contour_extraction.DilatingMaskExtractor(
-        mask_extractor=colour_mask_extractor,
-        dilation_size=config.LINE_DILATION_SIZE,
-    )
-    mask_skeleton_extractor = skeleton_extraction.MaskSkeletonExtractor(
-        mask_extractor=dilating_mask_extractor,
-    )
-    longest_skeleton_extractor = skeleton_extraction.LongestSkeletonExtraction(
-        skeleton_extractor=mask_skeleton_extractor,
-    )
-    skeleton_polyline_extractor = polyline_extraction.SkeletonPolylineExtractor(
-        skeleton_extractor=longest_skeleton_extractor,
-    )
-    greedy_polyline_extractor = polyline_extraction.GreedyPolylineExtractor(
-        polyline_extractor=skeleton_polyline_extractor,
-    )
-    return greedy_polyline_extractor
 
 
 def build_line_detector() -> LineDetector:

@@ -3,7 +3,6 @@ import pytest
 import skan
 
 from src.domain import types
-from src.vision import contour_extraction
 from src.vision import skeleton_extraction
 from tests.fixtures import polygons
 
@@ -11,81 +10,48 @@ from tests.fixtures import polygons
 class TestMaskSkeletonExtractor:
     @pytest.fixture
     def extractor(self) -> skeleton_extraction.MaskSkeletonExtractor:
-        return skeleton_extraction.MaskSkeletonExtractor(
-            mask_extractor=contour_extraction.ColourMaskExtractor(
-                colour=(100, 100, 100),
-                mask_tolerance=0,
-            ),
-        )
+        return skeleton_extraction.MaskSkeletonExtractor()
 
     @pytest.fixture
-    def input_frame(self) -> types.Frame:
-        # Rectangles do not skeletonise predictably, so use a one-pixel-wide case.
-        return polygons.draw_rectangle(
-            width=5,
-            height=1,
-            colour=(100, 100, 100),
-            padding=3,
-        )
+    def input_mask(self) -> types.Mask:
+        return polygons.draw_t_shape(bar_length=7, spur_length=2)[:, :, 0]
 
     @pytest.fixture
     def expected_skeleton(self) -> skan.Skeleton:
-        expected_image = polygons.draw_rectangle(
-            width=5,
-            height=1,
-            colour=(255, 255, 255),
-            padding=3,
-        )[:, :, 0]
-        return skan.Skeleton(expected_image > 0)
+        frame = polygons.draw_t_shape(bar_length=7, spur_length=2)
+        return skan.Skeleton(frame[:, :, 0] > 0)
 
     def test_extract(
         self,
         extractor: skeleton_extraction.MaskSkeletonExtractor,
-        input_frame: types.Frame,
+        input_mask: types.Mask,
         expected_skeleton: skan.Skeleton,
     ) -> None:
-        skeleton = extractor.extract(input_frame)
+        skeleton = extractor.extract(input_mask)
         assert np.array_equal(skeleton.coordinates, expected_skeleton.coordinates)
 
 
-class TestLongestSkeletonExtraction:
+class TestLongestSkeletonTransformer:
     @pytest.fixture
-    def extractor(self) -> skeleton_extraction.LongestSkeletonExtraction:
-        return skeleton_extraction.LongestSkeletonExtraction(
-            skeleton_extractor=skeleton_extraction.MaskSkeletonExtractor(
-                mask_extractor=contour_extraction.ColourMaskExtractor(
-                    colour=(100, 100, 100),
-                    mask_tolerance=0,
-                ),
-            ),
-        )
+    def transform(self) -> skeleton_extraction.LongestSkeletonTransformer:
+        return skeleton_extraction.LongestSkeletonTransformer()
 
     @pytest.fixture
-    def input_frame(self) -> types.Frame:
-        rectangle = polygons.draw_rectangle(
-            width=5,
-            height=1,
-            colour=(100, 100, 100),
-            padding=3,
-        )
-        rectangle[2, 5] = (100, 100, 100)
-        return rectangle
+    def input_skeleton(self) -> skan.Skeleton:
+        frame = polygons.draw_t_shape(bar_length=7, spur_length=2)
+        return skan.Skeleton(frame[:, :, 0] > 0)
 
     @pytest.fixture
     def expected_skeleton(self) -> skan.Skeleton:
-        expected_image = polygons.draw_rectangle(
-            width=5,
-            height=1,
-            colour=(255, 255, 255),
-            padding=3,
-        )[:, :, 0]
-        return skan.Skeleton(expected_image > 0)
+        frame = polygons.draw_t_shape(bar_length=7, spur_length=2)
+        frame[:2, 7 // 2] = 0  # Remove the spur.
+        return skan.Skeleton(frame[:, :, 0] > 0)
 
-    def test_extract(
+    def test_transform(
         self,
-        extractor: skeleton_extraction.LongestSkeletonExtraction,
-        input_frame: types.Frame,
+        transform: skeleton_extraction.LongestSkeletonTransformer,
+        input_skeleton: skan.Skeleton,
         expected_skeleton: skan.Skeleton,
     ) -> None:
-        skeleton = extractor.extract(input_frame)
+        skeleton = transform.transform(input_skeleton)
         assert np.array_equal(skeleton.coordinates, expected_skeleton.coordinates)

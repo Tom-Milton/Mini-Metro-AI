@@ -34,3 +34,18 @@ def draw_rectangle(
     frame = np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
     frame[padding : padding + height, padding : padding + width] = colour
     return frame
+
+
+def draw_t_shape(
+    bar_length: int,
+    spur_length: int,
+    padding: int = 0,
+) -> types.Frame:
+    """Draw a centered, one-pixel T with optional padding around it."""
+    frame_width = bar_length + 2 * padding
+    frame_height = spur_length + 1 + 2 * padding
+    frame = np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
+
+    frame[padding + spur_length, padding : padding + bar_length] = 255
+    frame[padding : padding + spur_length + 1, padding + bar_length // 2] = 255
+    return frame

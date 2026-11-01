@@ -7,6 +7,7 @@ from src.domain import models
 from src.domain import types
 from src.vision import config
 from src.vision import contour_extraction
+from src.vision import mask_extraction
 
 
 logger = logging.getLogger(__name__)
@@ -19,12 +20,15 @@ _VERTICES_TO_SHAPE: dict[int, types.StationShape] = {
 class StationDetector:
     def __init__(
         self,
-        station_contour_extractor: contour_extraction.ContourExtractor,
+        mask_extractor: mask_extraction.MaskExtractor,
+        contour_extractor: contour_extraction.ContourExtractor,
     ):
-        self.station_contour_extractor = station_contour_extractor
+        self.mask_extractor = mask_extractor
+        self.contour_extractor = contour_extractor
 
     def detect(self, frame: types.Frame) -> List[models.Station]:
-        contours = self.station_contour_extractor.extract(frame)
+        mask = self.mask_extractor.extract(frame)
+        contours = self.contour_extractor.extract(mask)
         stations = [self._create_station(contour) for contour in contours]
         logger.info("Detected %d stations", len(stations))
         return stations
@@ -52,19 +56,13 @@ class StationDetector:
         return _VERTICES_TO_SHAPE.get(len(polygon), types.StationShape.CIRCLE)
 
 
-def build_station_contour_extractor() -> contour_extraction.ContourExtractor:
-    mask_extractor = contour_extraction.ColourMaskExtractor(
-        colour=config.STATION_COLOUR,
-        mask_tolerance=config.MASK_TOLERANCE,
-    )
-    mask_contour_extractor = contour_extraction.MaskContourExtractor(
-        mask_extractor=mask_extractor,
-        min_area=config.MIN_CONTOUR_AREA,
-    )
-    return mask_contour_extractor
-
-
 def build_station_detector() -> StationDetector:
     return StationDetector(
-        station_contour_extractor=build_station_contour_extractor(),
+        mask_extractor=mask_extraction.ColourMaskExtractor(
+            colour=config.STATION_COLOUR,
+            mask_tolerance=config.MASK_TOLERANCE,
+        ),
+        contour_extractor=contour_extraction.MaskContourExtractor(
+            min_area=config.MIN_CONTOUR_AREA,
+        ),
     )

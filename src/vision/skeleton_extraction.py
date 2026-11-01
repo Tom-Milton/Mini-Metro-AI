@@ -7,7 +7,6 @@ import skan
 import skimage.morphology
 
 from src.domain import types
-from src.vision import contour_extraction
 
 
 # scikit-image does not expose a complete type signature for this function.
@@ -23,28 +22,26 @@ class NoSkeletonError(Exception):
 
 class SkeletonExtractor(ABC):
     @abstractmethod
-    def extract(self, frame: types.Frame) -> skan.Skeleton:
+    def extract(self, mask: types.Mask) -> skan.Skeleton:
         pass
 
 
 class MaskSkeletonExtractor(SkeletonExtractor):
-    def __init__(self, mask_extractor: contour_extraction.MaskExtractor):
-        self.mask_extractor = mask_extractor
-
-    def extract(self, frame: types.Frame) -> skan.Skeleton:
-        mask = self.mask_extractor.extract(frame)
+    def extract(self, mask: types.Mask) -> skan.Skeleton:
         skeleton_image = _typed_skeletonize(mask > 0)
         if np.count_nonzero(skeleton_image) == 0:
             raise NoSkeletonError
         return skan.Skeleton(skeleton_image)
 
 
-class LongestSkeletonExtraction(SkeletonExtractor):
-    def __init__(self, skeleton_extractor: SkeletonExtractor):
-        self.skeleton_extractor = skeleton_extractor
+class SkeletonTransformer(ABC):
+    @abstractmethod
+    def transform(self, skeleton: skan.Skeleton) -> skan.Skeleton:
+        pass
 
-    def extract(self, frame: types.Frame) -> skan.Skeleton:
-        skeleton = self.skeleton_extractor.extract(frame)
+
+class LongestSkeletonTransformer(SkeletonTransformer):
+    def transform(self, skeleton: skan.Skeleton) -> skan.Skeleton:
         graph = nx.from_scipy_sparse_array(skeleton.graph)
         longest_path_nodes = self._longest_path_nodes(graph)
         spur_paths = self._spur_paths(skeleton, longest_path_nodes)

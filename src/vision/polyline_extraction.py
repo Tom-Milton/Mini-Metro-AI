@@ -3,37 +3,37 @@ from itertools import combinations, product
 from typing import Sequence
 
 import numpy as np
+import skan
 
 from src.domain import types
-from src.vision import skeleton_extraction
 
 
 class PolylineExtractor(ABC):
     @abstractmethod
-    def extract(self, frame: types.Frame) -> Sequence[types.Polyline]:
+    def extract(self, skeleton: skan.Skeleton) -> Sequence[types.Polyline]:
         pass
 
 
 class SkeletonPolylineExtractor(PolylineExtractor):
-    def __init__(self, skeleton_extractor: skeleton_extraction.SkeletonExtractor):
-        self.skeleton_extractor = skeleton_extractor
-
-    def extract(self, frame: types.Frame) -> Sequence[types.Polyline]:
-        try:
-            skeleton = self.skeleton_extractor.extract(frame)
-        except skeleton_extraction.NoSkeletonError:
-            return []
+    def extract(self, skeleton: skan.Skeleton) -> Sequence[types.Polyline]:
         paths = (skeleton.path_coordinates(index) for index in range(skeleton.n_paths))
         # Convert Skan's (row, column) coordinates to the project's (x, y) order.
         return [path[:, ::-1] for path in paths]
 
 
-class GreedyPolylineExtractor(PolylineExtractor):
-    def __init__(self, polyline_extractor: PolylineExtractor):
-        self.polyline_extractor = polyline_extractor
+class PolylineTransformer(ABC):
+    @abstractmethod
+    def transform(
+        self, polylines: Sequence[types.Polyline]
+    ) -> Sequence[types.Polyline]:
+        pass
 
-    def extract(self, frame: types.Frame) -> Sequence[types.Polyline]:
-        lines = list(self.polyline_extractor.extract(frame))
+
+class GreedyPolylineTransformer(PolylineTransformer):
+    def transform(
+        self, polylines: Sequence[types.Polyline]
+    ) -> Sequence[types.Polyline]:
+        lines = list(polylines)
         while len(lines) > 1:
             first_index, second_index = self._find_closest_pair(lines)
             second = lines.pop(second_index)
