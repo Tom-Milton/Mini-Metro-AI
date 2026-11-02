@@ -19,6 +19,7 @@ LINE_COLOURS: dict[types.LineColour, types.Colour] = {
 }
 LINE_MASK_TOLERANCE: int = 15  # Colour tolerance for line masking
 LINE_DILATION_SIZE: int = 25  # Expand the mask to connect nearby line segments
+MASK_OPENING_KERNEL_SIZE: int = 3  # Remove thin anti-aliasing artefacts
 MASK_CLOSING_KERNEL_SIZE: int = 50  # Fill small gaps and holes in the mask
 MAX_STATION_LINE_DISTANCE: int = 10  # Match stations near the skeleton line
 

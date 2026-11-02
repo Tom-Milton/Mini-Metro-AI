@@ -20,6 +20,7 @@ class LinePolylineExtractor:
         self,
         station_colour_mask_extractor: mask_extraction.ColourMaskExtractor,
         line_colour_mask_extractor: mask_extraction.ColourMaskExtractor,
+        morphological_opening_mask_transformer: mask_extraction.MorphologicalOpeningMaskTransformer,
         dilating_mask_transformer: mask_extraction.DilatingMaskTransformer,
         morphological_closing_mask_transformer: mask_extraction.MorphologicalClosingMaskTransformer,
         mask_skeleton_extractor: skeleton_extraction.MaskSkeletonExtractor,
@@ -27,6 +28,9 @@ class LinePolylineExtractor:
     ):
         self.station_colour_mask_extractor = station_colour_mask_extractor
         self.line_colour_mask_extractor = line_colour_mask_extractor
+        self.morphological_opening_mask_transformer = (
+            morphological_opening_mask_transformer
+        )
         self.dilating_mask_transformer = dilating_mask_transformer
         self.morphological_closing_mask_transformer = (
             morphological_closing_mask_transformer
@@ -39,9 +43,11 @@ class LinePolylineExtractor:
         line_mask = self.line_colour_mask_extractor.extract(frame)
         if cv2.countNonZero(line_mask) == 0:
             return None
-        combined_mask = self.dilating_mask_transformer.transform(
-            cv2.bitwise_or(line_mask, station_mask)
+        combined_mask = cv2.bitwise_or(line_mask, station_mask)
+        combined_mask = self.morphological_opening_mask_transformer.transform(
+            combined_mask
         )
+        combined_mask = self.dilating_mask_transformer.transform(combined_mask)
         combined_mask = self.morphological_closing_mask_transformer.transform(
             combined_mask
         )
@@ -139,6 +145,11 @@ def build_line_polyline_extractor(colour: types.Colour) -> LinePolylineExtractor
         line_colour_mask_extractor=mask_extraction.ColourMaskExtractor(
             colour=colour,
             mask_tolerance=config.LINE_MASK_TOLERANCE,
+        ),
+        morphological_opening_mask_transformer=(
+            mask_extraction.MorphologicalOpeningMaskTransformer(
+                kernel_size=config.MASK_OPENING_KERNEL_SIZE,
+            )
         ),
         dilating_mask_transformer=mask_extraction.DilatingMaskTransformer(
             dilation_size=config.LINE_DILATION_SIZE,

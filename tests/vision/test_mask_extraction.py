@@ -75,6 +75,31 @@ class TestDilatingMaskTransformer:
         assert np.array_equal(observed_mask, expected_mask)
 
 
+class TestMorphologicalOpeningMaskTransformer:
+    @pytest.fixture
+    def transform(self) -> mask_extraction.MorphologicalOpeningMaskTransformer:
+        return mask_extraction.MorphologicalOpeningMaskTransformer(kernel_size=3)
+
+    @pytest.fixture
+    def input_mask(self) -> types.Mask:
+        return polygons.draw_rectangle(
+            width=1, height=3, colour=(255, 255, 255), padding=1
+        )[:, :, 0]
+
+    @pytest.fixture
+    def expected_mask(self, input_mask: types.Mask) -> types.Mask:
+        return np.zeros_like(input_mask)
+
+    def test_transform(
+        self,
+        transform: mask_extraction.MorphologicalOpeningMaskTransformer,
+        input_mask: types.Mask,
+        expected_mask: types.Mask,
+    ) -> None:
+        observed_mask = transform.transform(input_mask)
+        assert np.array_equal(observed_mask, expected_mask)
+
+
 class TestMorphologicalClosingMaskTransformer:
     @pytest.fixture
     def transform(self) -> mask_extraction.MorphologicalClosingMaskTransformer:

@@ -39,6 +39,18 @@ class DilatingMaskTransformer(MaskTransformer):
         return cv2.dilate(mask, kernel)
 
 
+class MorphologicalOpeningMaskTransformer(MaskTransformer):
+    def __init__(self, kernel_size: int):
+        self.kernel_size = kernel_size
+
+    def transform(self, mask: types.Mask) -> types.Mask:
+        kernel = cv2.getStructuringElement(
+            cv2.MORPH_RECT,
+            (self.kernel_size, self.kernel_size),
+        )
+        return cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+
+
 class MorphologicalClosingMaskTransformer(MaskTransformer):
     def __init__(self, kernel_size: int):
         self.kernel_size = kernel_size
