@@ -19,7 +19,9 @@ class TestMenuSelector:
 
     @pytest.fixture
     def menu(self, state: types.MenuState) -> models.Menu:
-        return models.Menu(position=(50, 100), line_id="yellow", state=state)
+        return models.Menu(
+            position=(50, 100), line_id=types.LineColour.YELLOW, state=state
+        )
 
     @pytest.fixture
     def expected_calls(self, state: types.MenuState) -> list[object]:

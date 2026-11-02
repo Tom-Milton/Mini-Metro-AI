@@ -1,5 +1,6 @@
 import logging
 
+from src.domain import types
 from src.automation import station_joiner
 from src.infrastructure import escape_listener
 from src.infrastructure import screen_capture
@@ -42,4 +43,4 @@ class CaptureApp:
         while not self._shutdown.wait(interval):
             frame = self._screen.capture()
             state = self._extractor.extract(frame)
-            self._joiner.join(state)
+            self._joiner.join(state, line_id=types.LineColour.YELLOW)

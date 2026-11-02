@@ -16,6 +16,7 @@ class RouteBuilder(ABC):
         self,
         game_state: models.GameState,
         new_stations: list[models.Station],
+        line_id: types.LineColour,
     ) -> list[types.Position]:
         pass
 
@@ -25,10 +26,11 @@ class AppendRouteBuilder(RouteBuilder):
         self,
         game_state: models.GameState,
         new_stations: list[models.Station],
+        line_id: types.LineColour,
     ) -> list[types.Position]:
         new_positions = [station.position for station in new_stations]
         stations_by_id = {station.id: station for station in game_state.stations}
-        endpoint_id = game_state.lines[0].station_ids[-1]
+        endpoint_id = game_state.lines[line_id].station_ids[-1]
         return [stations_by_id[endpoint_id].position, *new_positions]
 
 
@@ -37,18 +39,21 @@ class NearestNeighbourRouteBuilder(RouteBuilder):
         self,
         game_state: models.GameState,
         new_stations: list[models.Station],
+        line_id: types.LineColour,
     ) -> list[types.Position]:
         new_positions = [station.position for station in new_stations]
-        endpoints = self._line_endpoints(game_state)
+        endpoints = self._line_endpoints(game_state.lines[line_id], game_state.stations)
         start = self._closest_endpoint(endpoints, new_positions)
         return [start, *self._nearest_neighbour_order(start, new_positions)]
 
-    def _line_endpoints(self, game_state: models.GameState) -> list[types.Position]:
-        stations_by_id = {station.id: station for station in game_state.stations}
+    def _line_endpoints(
+        self, line: models.Line, stations: list[models.Station]
+    ) -> list[types.Position]:
+        stations_by_id = {station.id: station for station in stations}
+        station_ids = line.station_ids
         return [
             stations_by_id[station_id].position
-            for line in game_state.lines
-            for station_id in (line.station_ids[0], line.station_ids[-1])
+            for station_id in (station_ids[0], station_ids[-1])
         ]
 
     def _closest_endpoint(
@@ -107,18 +112,18 @@ class StationJoiner:
         self._mouse_controller = mouse
         self._selector = selector
 
-    def join(self, game_state: models.GameState) -> None:
+    def join(self, game_state: models.GameState, line_id: types.LineColour) -> None:
         new_stations = self._find_unjoined_stations(game_state)
         if not new_stations:
             logger.info("No stations to join")
             return
 
-        if game_state.lines:
-            route = self._route_builder.build(game_state, new_stations)
+        if line_id in game_state.lines:
+            route = self._route_builder.build(game_state, new_stations, line_id)
         else:
             route = [station.position for station in new_stations]
 
-        self._selector.select(game_state.menus["yellow"])
+        self._selector.select(game_state.menus[line_id])
         self._mouse_controller.join(route)
         logger.info("Joined %d stations", len(new_stations))
 
@@ -126,7 +131,9 @@ class StationJoiner:
         self, game_state: models.GameState
     ) -> list[models.Station]:
         joined_ids = {
-            station_id for line in game_state.lines for station_id in line.station_ids
+            station_id
+            for line in game_state.lines.values()
+            for station_id in line.station_ids
         }
         return [
             station for station in game_state.stations if station.id not in joined_ids

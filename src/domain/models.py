@@ -21,16 +21,17 @@ class Station(BaseModel):
 
 
 class Line(BaseModel):
+    id: types.LineColour
     station_ids: list[types.StationId]
 
 
 class Menu(BaseModel):
-    line_id: types.LineId
+    line_id: types.LineColour
     position: types.Position
     state: types.MenuState
 
 
 class GameState(BaseModel):
     stations: list[Station]
-    lines: list[Line]
-    menus: dict[types.LineId, Menu]
+    lines: dict[types.LineColour, Line]
+    menus: dict[types.LineColour, Menu]

@@ -13,7 +13,7 @@ class MenuSelector:
         self._mouse = mouse
 
     def select(self, menu: models.Menu) -> None:
-        logger.info("Selected %s line", menu.line_id)
+        logger.info("Selected %s line", menu.line_id.value)
         if menu.state == types.MenuState.SELECTED:
             return
         self._mouse.click(menu.position)

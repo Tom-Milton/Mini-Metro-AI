@@ -9,21 +9,37 @@ from tests.fixtures import polygons
 
 class TestMenuDetector:
     @pytest.fixture
+    def line_id(self) -> types.LineColour:
+        # Arbitrary colour; menu state classification is colour agnostic
+        return next(iter(types.LineColour))
+
+    @pytest.fixture
     def detector(self) -> menu_detection.MenuDetector:
         return menu_detection.build_menu_detector()
 
     @pytest.fixture
-    def input_frame(self, radius: int) -> types.Frame:
+    def colours(self) -> dict[types.LineColour, types.Colour]:
+        return config.LINE_COLOURS
+
+    @pytest.fixture
+    def input_frame(
+        self,
+        radius: int,
+        line_id: types.LineColour,
+        colours: dict[types.LineColour, types.Colour],
+    ) -> types.Frame:
         return polygons.draw_polygon(
             sides=100,
             radius=radius,
-            colour=config.LINE_COLOUR,
+            colour=colours[line_id],
             frame_size=200,
         )
 
     @pytest.fixture
-    def expected_menu(self, state: types.MenuState) -> models.Menu:
-        return models.Menu(position=(49, 49), line_id="yellow", state=state)
+    def expected_menu(
+        self, state: types.MenuState, line_id: types.LineColour
+    ) -> models.Menu:
+        return models.Menu(position=(49, 49), line_id=line_id, state=state)
 
     @pytest.mark.parametrize(
         "radius, state",
@@ -40,4 +56,4 @@ class TestMenuDetector:
         expected_menu: models.Menu,
     ) -> None:
         menu = detector.detect(input_frame)
-        assert menu == expected_menu
+        assert menu == {expected_menu.line_id: expected_menu}

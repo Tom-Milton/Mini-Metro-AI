@@ -15,25 +15,36 @@ logger = logging.getLogger(__name__)
 class MenuDetector:
     def __init__(
         self,
-        mask_extractor: mask_extraction.MaskExtractor,
+        mask_extractors: dict[types.LineColour, mask_extraction.MaskExtractor],
         contour_extractor: contour_extraction.ContourExtractor,
         diameter_ratios: dict[types.MenuState, float],
     ):
-        self.mask_extractor = mask_extractor
+        self.mask_extractors = mask_extractors
         self.contour_extractor = contour_extractor
         self.diameter_ratios = diameter_ratios
 
-    def detect(self, frame: types.Frame) -> models.Menu:
-        mask = self.mask_extractor.extract(frame)
+    def detect(self, frame: types.Frame) -> dict[types.LineColour, models.Menu]:
+        return {
+            menu.line_id: menu
+            for line_colour in self.mask_extractors
+            if (menu := self._detect_menu(frame, line_colour)) is not None
+        }
+
+    def _detect_menu(
+        self, frame: types.Frame, line_colour: types.LineColour
+    ) -> models.Menu | None:
+        mask = self.mask_extractors[line_colour].extract(frame)
         contours = self.contour_extractor.extract(mask)
+        if not contours:
+            return None
+
         contour = max(contours, key=cv2.contourArea)
-        position = contour_extraction.compute_centroid(contour)
         menu = models.Menu(
-            position=position,
-            line_id="yellow",
+            line_id=line_colour,
+            position=contour_extraction.compute_centroid(contour),
             state=self._classify_state(contour, frame.shape[0]),
         )
-        logger.info("Detected %s menu", menu.line_id)
+        logger.info("Detected %s menu", line_colour.value)
         return menu
 
     def _classify_state(
@@ -50,16 +61,15 @@ class MenuDetector:
 
 def build_menu_detector() -> MenuDetector:
     return MenuDetector(
-        mask_extractor=mask_extraction.ColourMaskExtractor(
-            colour=config.LINE_COLOUR,
-            mask_tolerance=config.STATION_MASK_TOLERANCE,
-        ),
+        mask_extractors={
+            line_colour: mask_extraction.ColourMaskExtractor(
+                colour=mask_colour,
+                mask_tolerance=config.STATION_MASK_TOLERANCE,
+            )
+            for line_colour, mask_colour in config.LINE_COLOURS.items()
+        },
         contour_extractor=contour_extraction.MaskContourExtractor(
             min_area=config.MIN_CONTOUR_AREA,
         ),
-        diameter_ratios={
-            types.MenuState.AVAILABLE: config.MENU_AVAILABLE_DIAMETER_RATIO,
-            types.MenuState.ACTIVE: config.MENU_ACTIVE_DIAMETER_RATIO,
-            types.MenuState.SELECTED: config.MENU_SELECTED_DIAMETER_RATIO,
-        },
+        diameter_ratios=config.MENU_DIAMETER_RATIOS,
     )

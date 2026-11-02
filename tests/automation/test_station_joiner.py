@@ -36,6 +36,11 @@ TEST_CASES = [
 
 
 class TestStationJoiner:
+    @pytest.fixture
+    def line_id(self) -> types.LineColour:
+        # Arbitrary colour; joining is colour agnostic
+        return next(iter(types.LineColour))
+
     @pytest.fixture(
         params=[
             pytest.param(station_joiner.AppendRouteBuilder, id="append"),
@@ -89,26 +94,27 @@ class TestStationJoiner:
         self,
         stations: list[models.Station],
         test_case: JoinCase,
-    ) -> list[models.Line]:
+        line_id: types.LineColour,
+    ) -> dict[types.LineColour, models.Line]:
         if test_case["line_station_indexes"]:
             station_ids = [
                 stations[index].id for index in test_case["line_station_indexes"]
             ]
-            return [models.Line(station_ids=station_ids)]
+            return {line_id: models.Line(id=line_id, station_ids=station_ids)}
         else:
-            return []
+            return {}
 
     @pytest.fixture
-    def menu(self) -> models.Menu:
+    def menu(self, line_id: types.LineColour) -> models.Menu:
         return models.Menu(
-            line_id="yellow", position=(50, 100), state=types.MenuState.ACTIVE
+            line_id=line_id, position=(50, 100), state=types.MenuState.ACTIVE
         )
 
     @pytest.fixture
     def game_state(
         self,
         stations: list[models.Station],
-        lines: list[models.Line],
+        lines: dict[types.LineColour, models.Line],
         menu: models.Menu,
     ) -> models.GameState:
         return models.GameState(
@@ -118,13 +124,11 @@ class TestStationJoiner:
         )
 
     @pytest.fixture
-    def expected_calls(
-        self, test_case: JoinCase, game_state: models.GameState
-    ) -> list[object]:
+    def expected_calls(self, test_case: JoinCase, menu: models.Menu) -> list[object]:
         expected_positions = test_case["expected_positions"]
         if expected_positions:
             return [
-                call.click(game_state.menus["yellow"].position),
+                call.click(menu.position),
                 call.join(expected_positions),
             ]
         else:
@@ -136,6 +140,7 @@ class TestStationJoiner:
         mock_mouse_controller: Mock,
         game_state: models.GameState,
         expected_calls: list[object],
+        line_id: types.LineColour,
     ) -> None:
-        joiner.join(game_state)
+        joiner.join(game_state, line_id)
         assert mock_mouse_controller.mock_calls == expected_calls

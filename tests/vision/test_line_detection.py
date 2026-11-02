@@ -9,15 +9,18 @@ from tests.fixtures import polygons
 
 class TestLineDetector:
     @pytest.fixture
+    def line_id(self) -> types.LineColour:
+        # Arbitrary colour; line extraction is colour agnostic
+        return next(iter(types.LineColour))
+
+    @pytest.fixture
     def detector(self) -> line_detection.LineDetector:
         return line_detection.build_line_detector()
 
     @pytest.fixture
-    def input_frame(self) -> types.Frame:
+    def input_frame(self, line_id: types.LineColour) -> types.Frame:
         return polygons.draw_rectangle(
-            width=500,
-            height=1,
-            colour=config.LINE_COLOUR,
+            width=500, height=1, colour=config.LINE_COLOURS[line_id]
         )
 
     @pytest.fixture
@@ -28,18 +31,21 @@ class TestLineDetector:
         ]
 
     @pytest.fixture
-    def expected_line(self) -> models.Line:
-        return models.Line(
-            station_ids=["square-375-0", "circle-125-0"],
-        )
+    def expected_lines(
+        self, line_id: types.LineColour
+    ) -> dict[types.LineColour, models.Line]:
+        return {
+            line_id: models.Line(
+                id=line_id,
+                station_ids=["square-375-0", "circle-125-0"],
+            )
+        }
 
     def test_detect(
         self,
         detector: line_detection.LineDetector,
         input_frame: types.Frame,
         stations: list[models.Station],
-        expected_line: models.Line,
+        expected_lines: dict[types.LineColour, models.Line],
     ) -> None:
-        lines = detector.detect(input_frame, stations)
-        observed_line = lines[0]
-        assert observed_line == expected_line
+        assert detector.detect(input_frame, stations) == expected_lines

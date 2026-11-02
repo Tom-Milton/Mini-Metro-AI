@@ -17,20 +17,31 @@
       "shape": "square"
     }
   ],
-  "lines": [
-    {
+  "lines": {
+    "yellow": {
+      "id": "yellow",
       "station_ids": [
         "triangle-1284-545",
         "circle-948-539",
         "square-613-119"
       ]
     }
-  ],
+  },
   "menus": {
     "yellow": {
       "line_id": "yellow",
       "position": [776, 1024],
       "state": "active"
+    },
+    "red": {
+      "line_id": "red",
+      "position": [849, 1024],
+      "state": "available"
+    },
+    "blue": {
+      "line_id": "blue",
+      "position": [922, 1024],
+      "state": "available"
     }
   }
 }

@@ -34,9 +34,11 @@ class LinePolylineExtractor:
         self.mask_skeleton_extractor = mask_skeleton_extractor
         self.eulerian_polyline_extractor = eulerian_polyline_extractor
 
-    def extract(self, frame: types.Frame) -> types.Polyline:
+    def extract(self, frame: types.Frame) -> types.Polyline | None:
         station_mask = self.station_colour_mask_extractor.extract(frame)
         line_mask = self.line_colour_mask_extractor.extract(frame)
+        if cv2.countNonZero(line_mask) == 0:
+            return None
         combined_mask = self.dilating_mask_transformer.transform(
             cv2.bitwise_or(line_mask, station_mask)
         )
@@ -50,32 +52,45 @@ class LinePolylineExtractor:
 class LineDetector:
     def __init__(
         self,
-        line_polyline_extractor: LinePolylineExtractor,
+        line_polyline_extractors: dict[types.LineColour, LinePolylineExtractor],
     ):
-        self.line_polyline_extractor = line_polyline_extractor
+        self.line_polyline_extractors = line_polyline_extractors
 
     def detect(
         self,
         frame: types.Frame,
         stations: List[models.Station],
-    ) -> List[models.Line]:
-        try:
-            polyline = self.line_polyline_extractor.extract(frame)
-        except skeleton_extraction.NoSkeletonError:
-            return []
-        lines = [self._create_line(polyline, stations)]
-        logger.info("Detected %d lines", len(lines))
-        return lines
+    ) -> dict[types.LineColour, models.Line]:
+        return {
+            line.id: line
+            for line_colour in self.line_polyline_extractors
+            if (line := self._detect_line(frame, stations, line_colour)) is not None
+        }
+
+    def _detect_line(
+        self,
+        frame: types.Frame,
+        stations: List[models.Station],
+        line_colour: types.LineColour,
+    ) -> models.Line | None:
+        polyline = self.line_polyline_extractors[line_colour].extract(frame)
+        if polyline is not None:
+            return self._create_line(polyline, stations, line_colour)
+        else:
+            return None
 
     def _create_line(
         self,
         polyline: types.Polyline,
         stations: List[models.Station],
+        line_colour: types.LineColour,
     ) -> models.Line:
         matched_stations = self._find_stations(polyline, stations)
         station_ids = self._order_stations(polyline, matched_stations)
-        logger.info("Detected line with %d stations", len(station_ids))
-        return models.Line(station_ids=station_ids)
+        logger.info(
+            "Detected %s line with %d stations", line_colour.value, len(station_ids)
+        )
+        return models.Line(id=line_colour, station_ids=station_ids)
 
     def _find_stations(
         self,
@@ -115,14 +130,14 @@ class LineDetector:
         )
 
 
-def build_line_polyline_extractor() -> LinePolylineExtractor:
+def build_line_polyline_extractor(colour: types.Colour) -> LinePolylineExtractor:
     return LinePolylineExtractor(
         station_colour_mask_extractor=mask_extraction.ColourMaskExtractor(
             colour=config.STATION_COLOUR,
             mask_tolerance=config.STATION_MASK_TOLERANCE,
         ),
         line_colour_mask_extractor=mask_extraction.ColourMaskExtractor(
-            colour=config.LINE_COLOUR,
+            colour=colour,
             mask_tolerance=config.LINE_MASK_TOLERANCE,
         ),
         dilating_mask_transformer=mask_extraction.DilatingMaskTransformer(
@@ -142,5 +157,8 @@ def build_line_polyline_extractor() -> LinePolylineExtractor:
 
 def build_line_detector() -> LineDetector:
     return LineDetector(
-        line_polyline_extractor=build_line_polyline_extractor(),
+        line_polyline_extractors={
+            line_colour: build_line_polyline_extractor(mask_colour)
+            for line_colour, mask_colour in config.LINE_COLOURS.items()
+        },
     )

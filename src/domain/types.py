@@ -4,12 +4,6 @@ from typing import TypeAlias, NamedTuple
 import numpy as np
 
 
-class MenuState(Enum):
-    AVAILABLE = "available"
-    ACTIVE = "active"
-    SELECTED = "selected"
-
-
 class ShapeProperties(NamedTuple):
     name: str
     vertices: int
@@ -25,6 +19,18 @@ class StationShape(Enum):
         return next(m for m in cls if m.value.name == label)
 
 
+class LineColour(Enum):
+    YELLOW = "yellow"
+    RED = "red"
+    BLUE = "blue"
+
+
+class MenuState(Enum):
+    AVAILABLE = "available"
+    ACTIVE = "active"
+    SELECTED = "selected"
+
+
 Colour: TypeAlias = tuple[int, int, int]  # (B, G, R) - BGR colour value
 Frame: TypeAlias = np.ndarray  # 3D array (height, width, 3 channels BGR)
 Mask: TypeAlias = np.ndarray  # 2D array (height, width) - binary mask
@@ -34,4 +40,3 @@ Position: TypeAlias = tuple[int, int]  # (x, y) coordinates
 DisplaySize: TypeAlias = tuple[int, int]  # (width, height) in pixels
 
 StationId: TypeAlias = str
-LineId: TypeAlias = str

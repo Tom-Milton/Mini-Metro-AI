@@ -12,7 +12,11 @@ POLYGON_EPSILON_RATIO: float = (
 )
 
 # Line detection
-LINE_COLOUR: types.Colour = (5, 204, 249)  # Yellow line colour (BGR)
+LINE_COLOURS: dict[types.LineColour, types.Colour] = {
+    types.LineColour.YELLOW: (5, 204, 249),
+    types.LineColour.RED: (35, 45, 233),
+    types.LineColour.BLUE: (146, 63, 28),
+}
 LINE_MASK_TOLERANCE: int = 15  # Colour tolerance for line masking
 LINE_DILATION_SIZE: int = 25  # Expand the mask to connect nearby line segments
 MASK_CLOSING_KERNEL_SIZE: int = 50  # Fill small gaps and holes in the mask
@@ -20,6 +24,8 @@ MIN_SKELETON_COMPONENT_SIZE: int = 250  # Minimum size of retained components
 MAX_STATION_LINE_DISTANCE: int = 10  # Match stations near the skeleton line
 
 # Menu detection
-MENU_AVAILABLE_DIAMETER_RATIO: float = 0.027  # Available button diameter / frame height
-MENU_ACTIVE_DIAMETER_RATIO: float = 0.053  # Active button diameter / frame height
-MENU_SELECTED_DIAMETER_RATIO: float = 0.095  # Selected button diameter / frame height
+MENU_DIAMETER_RATIOS: dict[types.MenuState, float] = {
+    types.MenuState.AVAILABLE: 0.027,
+    types.MenuState.ACTIVE: 0.053,
+    types.MenuState.SELECTED: 0.095,
+}

@@ -24,13 +24,13 @@ class GameStateExtractor:
         frame: types.Frame,
     ) -> models.GameState:
         game_space, menu_space = self._split_frame(frame)
-        menu = self._menu_detector.detect(menu_space)
+        menus = self._menu_detector.detect(menu_space)
         stations = self._station_detector.detect(game_space)
         lines = self._line_detector.detect(game_space, stations)
         return models.GameState(
             stations=stations,
             lines=lines,
-            menus={menu.line_id: menu},
+            menus=menus,
         )
 
     def _split_frame(self, frame: types.Frame) -> tuple[types.Frame, types.Frame]:
