@@ -148,9 +148,7 @@ def build_line_polyline_extractor(colour: types.Colour) -> LinePolylineExtractor
                 kernel_size=config.MASK_CLOSING_KERNEL_SIZE,
             )
         ),
-        mask_skeleton_extractor=skeleton_extraction.MaskSkeletonExtractor(
-            min_component_size=config.MIN_SKELETON_COMPONENT_SIZE,
-        ),
+        mask_skeleton_extractor=skeleton_extraction.MaskSkeletonExtractor(),
         eulerian_polyline_extractor=polyline_extraction.EulerianPolylineExtractor(),
     )
 

@@ -10,9 +10,7 @@ from tests.fixtures import polygons
 class TestMaskSkeletonExtractor:
     @pytest.fixture
     def extractor(self) -> skeleton_extraction.MaskSkeletonExtractor:
-        return skeleton_extraction.MaskSkeletonExtractor(
-            min_component_size=0,
-        )
+        return skeleton_extraction.MaskSkeletonExtractor()
 
     @pytest.fixture
     def input_mask(self) -> types.Mask:
