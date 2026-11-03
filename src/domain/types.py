@@ -38,5 +38,8 @@ Contour: TypeAlias = np.ndarray  # (N, 1, 2) - contour points
 Polyline: TypeAlias = np.ndarray  # (N, 2) - ordered (x, y) points
 Position: TypeAlias = tuple[int, int]  # (x, y) coordinates
 DisplaySize: TypeAlias = tuple[int, int]  # (width, height) in pixels
+Region: TypeAlias = tuple[
+    float, float, float, float
+]  # Normalised (left, top, right, bottom)
 
 StationId: TypeAlias = str

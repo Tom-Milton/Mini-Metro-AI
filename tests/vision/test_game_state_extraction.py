@@ -23,7 +23,14 @@ class TestGameStateExtractor:
             menu_detector=menu_detection.build_menu_detector(),
         )
 
-    @pytest.fixture(params=list(FIXTURES_DIR.glob("*.png")), ids=lambda p: p.stem)
+    @pytest.fixture(
+        params=[
+            path
+            for path in FIXTURES_DIR.glob("*.png")
+            if path.with_suffix(".state.json").exists()
+        ],
+        ids=lambda p: p.stem,
+    )
     def screenshot_path(self, request: pytest.FixtureRequest) -> Path:
         return request.param
 

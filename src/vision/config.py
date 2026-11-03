@@ -7,9 +7,7 @@ MIN_CONTOUR_AREA: float = 5.0  # Discard noisy contours smaller than this
 # Station detection
 STATION_COLOUR: types.Colour = (248, 248, 248)  # Station detection colour (BGR)
 STATION_MASK_TOLERANCE: int = 5  # Colour tolerance for station masking
-POLYGON_EPSILON_RATIO: float = (
-    0.02  # Polygon approximation epsilon ratio (epsilon * perimeter)
-)
+POLYGON_EPSILON_RATIO: float = 0.02  # Approximation epsilon as a perimeter fraction
 
 # Line detection
 LINE_COLOURS: dict[types.LineColour, types.Colour] = {
@@ -29,3 +27,12 @@ MENU_DIAMETER_RATIOS: dict[types.MenuState, float] = {
     types.MenuState.ACTIVE: 0.053,
     types.MenuState.SELECTED: 0.095,
 }
+
+# Week detection
+WEEK_REGION: types.Region = (
+    500 / 1408,
+    258 / 881,
+    634 / 1408,
+    305 / 881,
+)
+WEEK_MATCH_THRESHOLD: float = 0.9  # Minimum Week match score

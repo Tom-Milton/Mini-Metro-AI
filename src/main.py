@@ -2,6 +2,7 @@ import logging
 
 from src.bot import runner
 from src.automation import route_building
+from src.automation import week_navigation
 from src.infrastructure import dpi_awareness
 from src.infrastructure import escape_listener
 from src.infrastructure import screen_capture
@@ -10,6 +11,7 @@ from src.vision import game_state_extraction
 from src.vision import station_detection
 from src.vision import line_detection
 from src.vision import menu_detection
+from src.vision import week_detection
 
 
 def run() -> None:
@@ -23,7 +25,9 @@ def run() -> None:
     shutdown = shutdown_manager.ShutdownManager()
     app = runner.CaptureApp(
         screen=screen_capture.ScreenCapture(),
-        extractor=game_state_extraction.GameStateExtractor(
+        week_detector=week_detection.build_week_detector(),
+        week_navigator=week_navigation.build_week_navigator(),
+        game_extractor=game_state_extraction.GameStateExtractor(
             station_detector=station_detection.build_station_detector(),
             line_detector=line_detection.build_line_detector(),
             menu_detector=menu_detection.build_menu_detector(),
