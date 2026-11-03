@@ -4,7 +4,7 @@ from src.bot import runner
 from src.automation import route_building
 from src.automation import week_navigation
 from src.infrastructure import dpi_awareness
-from src.infrastructure import escape_listener
+from src.infrastructure import keyboard_listener
 from src.infrastructure import screen_capture
 from src.infrastructure import shutdown_manager
 from src.vision import game_state_extraction
@@ -33,7 +33,10 @@ def run() -> None:
             menu_detector=menu_detection.build_menu_detector(),
         ),
         route_drawer=route_building.build_route_drawer(),
-        keyboard=escape_listener.EscapeListener(on_escape=shutdown.stop),
+        keyboard=keyboard_listener.KeyboardListener(
+            on_escape=shutdown.stop,
+            on_space=lambda: app.toggle_pause(),
+        ),
         shutdown=shutdown,
     )
     app.run()
