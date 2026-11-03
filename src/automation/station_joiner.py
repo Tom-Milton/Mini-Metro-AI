@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from src.domain import models
 from src.domain import types
 from src.infrastructure import mouse_controller
-from src.automation import menu_selector
+from src.automation import menu_selection
 
 
 logger = logging.getLogger(__name__)
@@ -105,7 +105,7 @@ class StationJoiner:
     def __init__(
         self,
         route_builder: RouteBuilder,
-        selector: menu_selector.MenuSelector,
+        selector: menu_selection.MenuSelector,
         mouse: mouse_controller.MouseController,
     ) -> None:
         self._route_builder = route_builder
@@ -142,7 +142,7 @@ class StationJoiner:
 
 def build_station_joiner() -> StationJoiner:
     return StationJoiner(
-        selector=menu_selector.build_menu_selector(),
+        selector=menu_selection.build_menu_selector(),
         route_builder=NearestNeighbourRouteBuilder(),
         mouse=mouse_controller.MouseController(),
     )

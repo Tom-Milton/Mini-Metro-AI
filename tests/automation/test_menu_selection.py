@@ -2,20 +2,20 @@ from unittest.mock import Mock, call
 
 import pytest
 
-from src.automation import menu_selector
+from src.automation import menu_selection
 from src.domain import models
 from src.domain import types
 from src.infrastructure import mouse_controller
 
 
-class TestMenuSelector:
+class TestLineMenuSelector:
     @pytest.fixture
     def mock_mouse(self) -> Mock:
         return Mock(spec=mouse_controller.MouseController)
 
     @pytest.fixture
-    def selector(self, mock_mouse: Mock) -> menu_selector.MenuSelector:
-        return menu_selector.MenuSelector(mouse=mock_mouse)
+    def selector(self, mock_mouse: Mock) -> menu_selection.MenuSelector:
+        return menu_selection.LineMenuSelector(mouse=mock_mouse)
 
     @pytest.fixture
     def menu(self, state: types.MenuState) -> models.Menu:
@@ -25,15 +25,22 @@ class TestMenuSelector:
 
     @pytest.fixture
     def expected_calls(self, state: types.MenuState) -> list[object]:
-        return [] if state == types.MenuState.SELECTED else [call.click((50, 100))]
+        clicks = 1 if state == types.MenuState.SELECTED else 2
+        return [call.click((50, 100))] * clicks
 
     @pytest.mark.parametrize("state", list(types.MenuState))
-    def test_select(
+    def test_selection(
         self,
-        selector: menu_selector.MenuSelector,
+        selector: menu_selection.MenuSelector,
         mock_mouse: Mock,
         menu: models.Menu,
         expected_calls: list[object],
     ) -> None:
         selector.select(menu)
-        assert mock_mouse.mock_calls == expected_calls
+        selector.select(menu)
+        selector.deselect(menu)
+        selector.deselect(menu)
+        assert (mock_mouse.mock_calls, menu.state) == (
+            expected_calls,
+            types.MenuState.ACTIVE,
+        )

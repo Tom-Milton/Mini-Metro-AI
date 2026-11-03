@@ -11,3 +11,4 @@
 - Prefer module imports for third-party packages and qualified access
 - Classes with builders must require their dependencies in __init__; construct dependencies in the builder instead of using fallbacks.
 - Prefer explicit if/else branches over early returns.
+- Name modules after activities (menu_selection), use ABCs for dependency types (MenuSelector), and give implementations specific names (LineMenuSelector).
