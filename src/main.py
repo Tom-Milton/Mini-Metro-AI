@@ -1,7 +1,7 @@
 import logging
 
 from src.bot import runner
-from src.automation import station_joiner
+from src.automation import route_building
 from src.infrastructure import dpi_awareness
 from src.infrastructure import escape_listener
 from src.infrastructure import screen_capture
@@ -28,7 +28,7 @@ def run() -> None:
             line_detector=line_detection.build_line_detector(),
             menu_detector=menu_detection.build_menu_detector(),
         ),
-        joiner=station_joiner.build_station_joiner(),
+        route_drawer=route_building.build_route_drawer(),
         keyboard=escape_listener.EscapeListener(on_escape=shutdown.stop),
         shutdown=shutdown,
     )

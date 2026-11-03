@@ -1,7 +1,6 @@
 import logging
 
-from src.domain import types
-from src.automation import station_joiner
+from src.automation import route_building
 from src.infrastructure import escape_listener
 from src.infrastructure import screen_capture
 from src.infrastructure import shutdown_manager
@@ -15,13 +14,13 @@ class CaptureApp:
         self,
         screen: screen_capture.ScreenCapture,
         extractor: game_state_extraction.GameStateExtractor,
-        joiner: station_joiner.StationJoiner,
+        route_drawer: route_building.RouteDrawer,
         keyboard: escape_listener.EscapeListener,
         shutdown: shutdown_manager.ShutdownManager,
     ) -> None:
         self._screen = screen
         self._extractor = extractor
-        self._joiner = joiner
+        self._route_drawer = route_drawer
         self._keyboard = keyboard
         self._shutdown = shutdown
 
@@ -43,4 +42,4 @@ class CaptureApp:
         while not self._shutdown.wait(interval):
             frame = self._screen.capture()
             state = self._extractor.extract(frame)
-            self._joiner.join(state, line_id=types.LineColour.YELLOW)
+            self._route_drawer.draw(state)
