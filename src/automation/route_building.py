@@ -1,4 +1,5 @@
 import logging
+import math
 from abc import ABC, abstractmethod
 
 from src.domain import models
@@ -34,9 +35,49 @@ class AppendingRouteBuilder(RouteBuilder):
         station_ids = unjoined_stations(game_state)
         if not station_ids or not game_state.lines:
             return []
+
         line = next(iter(game_state.lines.values()))
         station_ids = [line.station_ids[-1], *station_ids]
         return [models.Line(id=line.id, station_ids=station_ids)]
+
+
+class NearestNeighbourRouteBuilder(RouteBuilder):
+    def build(self, game_state: models.GameState) -> list[models.Line]:
+        station_ids = unjoined_stations(game_state)
+        if not station_ids or not game_state.lines:
+            return []
+
+        routes = self._endpoint_starts(game_state.lines)
+        while station_ids:
+            station_id, route = self._nearest_connection(
+                station_ids, routes, game_state.stations
+            )
+            route.station_ids.append(station_id)
+            station_ids.remove(station_id)
+        return [route for route in routes if len(route.station_ids) > 1]
+
+    def _endpoint_starts(
+        self, lines: dict[types.LineColour, models.Line]
+    ) -> list[models.Line]:
+        return [
+            models.Line(id=line.id, station_ids=[station_id])
+            for line in lines.values()
+            for station_id in (line.station_ids[0], line.station_ids[-1])
+        ]
+
+    def _nearest_connection(
+        self,
+        station_ids: list[types.StationId],
+        routes: list[models.Line],
+        stations: dict[types.StationId, models.Station],
+    ) -> tuple[types.StationId, models.Line]:
+        return min(
+            ((station_id, route) for station_id in station_ids for route in routes),
+            key=lambda connection: math.dist(
+                stations[connection[0]].position,
+                stations[connection[1].station_ids[-1]].position,
+            ),
+        )
 
 
 class RouteDrawer:
@@ -69,7 +110,7 @@ class RouteDrawer:
 
 def build_route_drawer() -> RouteDrawer:
     return RouteDrawer(
-        route_builder=AppendingRouteBuilder(),
+        route_builder=NearestNeighbourRouteBuilder(),
         menu_selector=menu_selection.build_menu_selector(),
         mouse_controller=mouse_controller.MouseController(),
     )

@@ -45,9 +45,18 @@ class TestRouteDrawer:
         # Arbitrary colour; joining is colour agnostic
         return next(iter(types.LineColour))
 
-    @pytest.fixture
-    def route_builder(self) -> route_building.RouteBuilder:
-        return route_building.AppendingRouteBuilder()
+    @pytest.fixture(
+        params=[
+            pytest.param(route_building.AppendingRouteBuilder, id="appending"),
+            pytest.param(
+                route_building.NearestNeighbourRouteBuilder, id="nearest_neighbour"
+            ),
+        ]
+    )
+    def route_builder(
+        self, request: pytest.FixtureRequest
+    ) -> route_building.RouteBuilder:
+        return request.param()
 
     @pytest.fixture
     def menu_selector(self, mock_mouse_controller: Mock) -> menu_selection.MenuSelector:
