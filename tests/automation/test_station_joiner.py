@@ -118,7 +118,7 @@ class TestStationJoiner:
         menu: models.Menu,
     ) -> models.GameState:
         return models.GameState(
-            stations=stations,
+            stations={station.id: station for station in stations},
             lines=lines,
             menus={menu.line_id: menu},
         )

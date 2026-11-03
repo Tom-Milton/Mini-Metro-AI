@@ -29,7 +29,7 @@ class AppendRouteBuilder(RouteBuilder):
         line_id: types.LineColour,
     ) -> list[types.Position]:
         new_positions = [station.position for station in new_stations]
-        stations_by_id = {station.id: station for station in game_state.stations}
+        stations_by_id = game_state.stations
         endpoint_id = game_state.lines[line_id].station_ids[-1]
         return [stations_by_id[endpoint_id].position, *new_positions]
 
@@ -47,9 +47,9 @@ class NearestNeighbourRouteBuilder(RouteBuilder):
         return [start, *self._nearest_neighbour_order(start, new_positions)]
 
     def _line_endpoints(
-        self, line: models.Line, stations: list[models.Station]
+        self, line: models.Line, stations: dict[types.StationId, models.Station]
     ) -> list[types.Position]:
-        stations_by_id = {station.id: station for station in stations}
+        stations_by_id = stations
         station_ids = line.station_ids
         return [
             stations_by_id[station_id].position
@@ -136,7 +136,7 @@ class StationJoiner:
             for station_id in line.station_ids
         }
         return [
-            station for station in game_state.stations if station.id not in joined_ids
+            station for station in game_state.stations.values() if station.id not in joined_ids
         ]
 
 

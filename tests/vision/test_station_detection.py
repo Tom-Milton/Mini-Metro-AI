@@ -67,5 +67,5 @@ class TestStationDetector:
         expected_station: models.Station,
     ) -> None:
         stations = detector.detect(input_frame)
-        observed_station = stations[0]
+        observed_station = next(iter(stations.values()))
         assert observed_station.shape == expected_station.shape

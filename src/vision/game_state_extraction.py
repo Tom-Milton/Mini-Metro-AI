@@ -26,7 +26,7 @@ class GameStateExtractor:
         game_space, menu_space = self._split_frame(frame)
         menus = self._menu_detector.detect(menu_space)
         stations = self._station_detector.detect(game_space)
-        lines = self._line_detector.detect(game_space, stations)
+        lines = self._line_detector.detect(game_space, stations.values())
         return models.GameState(
             stations=stations,
             lines=lines,

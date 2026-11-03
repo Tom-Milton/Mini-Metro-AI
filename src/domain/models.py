@@ -32,6 +32,6 @@ class Menu(BaseModel):
 
 
 class GameState(BaseModel):
-    stations: list[Station]
+    stations: dict[types.StationId, Station]
     lines: dict[types.LineColour, Line]
     menus: dict[types.LineColour, Menu]

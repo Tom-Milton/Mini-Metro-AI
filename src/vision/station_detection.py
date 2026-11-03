@@ -1,4 +1,3 @@
-from typing import List
 import logging
 
 import cv2
@@ -26,12 +25,12 @@ class StationDetector:
         self.mask_extractor = mask_extractor
         self.contour_extractor = contour_extractor
 
-    def detect(self, frame: types.Frame) -> List[models.Station]:
+    def detect(self, frame: types.Frame) -> dict[types.StationId, models.Station]:
         mask = self.mask_extractor.extract(frame)
         contours = self.contour_extractor.extract(mask)
         stations = [self._create_station(contour) for contour in contours]
         logger.info("Detected %d stations", len(stations))
-        return stations
+        return {station.id: station for station in stations}
 
     def _create_station(self, contour: types.Contour) -> models.Station:
         position = contour_extraction.compute_centroid(contour)

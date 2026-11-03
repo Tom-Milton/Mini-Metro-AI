@@ -1,4 +1,5 @@
 from typing import List
+from collections.abc import Iterable
 import logging
 
 import cv2
@@ -65,7 +66,7 @@ class LineDetector:
     def detect(
         self,
         frame: types.Frame,
-        stations: List[models.Station],
+        stations: Iterable[models.Station],
     ) -> dict[types.LineColour, models.Line]:
         return {
             line.id: line
@@ -76,7 +77,7 @@ class LineDetector:
     def _detect_line(
         self,
         frame: types.Frame,
-        stations: List[models.Station],
+        stations: Iterable[models.Station],
         line_colour: types.LineColour,
     ) -> models.Line | None:
         polyline = self.line_polyline_extractors[line_colour].extract(frame)
@@ -88,7 +89,7 @@ class LineDetector:
     def _create_line(
         self,
         polyline: types.Polyline,
-        stations: List[models.Station],
+        stations: Iterable[models.Station],
         line_colour: types.LineColour,
     ) -> models.Line:
         matched_stations = self._find_stations(polyline, stations)
@@ -101,7 +102,7 @@ class LineDetector:
     def _find_stations(
         self,
         polyline: types.Polyline,
-        stations: List[models.Station],
+        stations: Iterable[models.Station],
     ) -> List[models.Station]:
         """Return the stations that are contained within the given polyline."""
         contour = polyline.reshape(-1, 1, 2)
@@ -115,7 +116,7 @@ class LineDetector:
     def _order_stations(
         self,
         polyline: types.Polyline,
-        stations: List[models.Station],
+        stations: Iterable[models.Station],
     ) -> List[types.StationId]:
         """Return station IDs in the order they occur along the polyline."""
         stations = sorted(

@@ -1,22 +1,22 @@
 {
-  "stations": [
-    {
+  "stations": {
+    "triangle-1284-545": {
       "position": [1284, 545],
       "shape": "triangle"
     },
-    {
+    "circle-948-539": {
       "position": [948, 539],
       "shape": "circle"
     },
-    {
+    "circle-1451-203": {
       "position": [1451, 203],
       "shape": "circle"
     },
-    {
+    "square-613-119": {
       "position": [613, 119],
       "shape": "square"
     }
-  ],
+  },
   "lines": {
     "yellow": {
       "id": "yellow",
